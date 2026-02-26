@@ -1,0 +1,15 @@
+node_modules/
+dist/
+.DS_Store
+.env
+venv/
+__pycache__/
+*.log
+error_log.txt
+test_*.js
+test.js
+test_api.js
+test_logic.js
+.vite/
+.cursor/
+.gemini/
