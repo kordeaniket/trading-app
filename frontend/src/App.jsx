@@ -1,9 +1,11 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
-import { TrendingUp, LayoutDashboard, Settings, Layers, Briefcase } from 'lucide-react';
+import { TrendingUp, LayoutDashboard, Settings, Layers, Briefcase, Zap } from 'lucide-react';
 import Dashboard from './pages/Dashboard';
 import Scanner from './pages/Scanner';
 import HeikinAshi from './pages/HeikinAshi';
+import BullishScanner from './pages/BullishScanner';
+import BearishScanner from './pages/BearishScanner';
 
 const Sidebar = () => {
     const location = useLocation();
@@ -30,6 +32,12 @@ const Sidebar = () => {
                     </Link>
                     <Link to="/scanner" className={getLinkClass('/scanner')}>
                         <Layers className="w-5 h-5" /> AI SCANNER
+                    </Link>
+                    <Link to="/bullish" className={getLinkClass('/bullish')}>
+                        <Zap className="w-5 h-5 text-emerald-500" /> BULLISH SNIPER
+                    </Link>
+                    <Link to="/bearish" className={getLinkClass('/bearish')}>
+                        <Zap className="w-5 h-5 text-red-500" /> BEARISH SNIPER
                     </Link>
                     <Link to="/heikin-ashi" className={getLinkClass('/heikin-ashi')}>
                         <TrendingUp className="w-5 h-5 text-green-500" /> HA TREND RIDE
@@ -59,6 +67,8 @@ function App() {
                     <Routes>
                         <Route path="/" element={<Dashboard />} />
                         <Route path="/scanner" element={<Scanner />} />
+                        <Route path="/bullish" element={<BullishScanner />} />
+                        <Route path="/bearish" element={<BearishScanner />} />
                         <Route path="/heikin-ashi" element={<HeikinAshi />} />
                     </Routes>
                 </div>
