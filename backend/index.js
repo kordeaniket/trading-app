@@ -4,311 +4,352 @@ import cors from 'cors';
 const app = express();
 app.use(cors());
 
-// List of ~80 major Nifty stocks
 const NIFTY_STOCKS = [
-    "RELIANCE.NS", "TCS.NS", "HDFCBANK.NS", "ICICIBANK.NS", "INFY.NS",
-    "SBIN.NS", "BHARTIARTL.NS", "ITC.NS", "HINDUNILVR.NS", "LT.NS",
-    "BAJFINANCE.NS", "KOTAKBANK.NS", "HCLTECH.NS", "ASIANPAINT.NS", "AXISBANK.NS",
-    "MARUTI.NS", "SUNPHARMA.NS", "TITAN.NS", "BAJAJFINSV.NS", "WIPRO.NS",
-    "ULTRACEMCO.NS", "ONGC.NS", "NESTLEIND.NS", "JSWSTEEL.NS", "POWERGRID.NS",
-    "TRENT.NS", "ADANIENT.NS", "ZOMATO.NS", "JIOFIN.NS", "TVSMOTOR.NS",
-    "TATAMOTORS.NS", "M&M.NS", "NTPC.NS", "COALINDIA.NS", "GRASIM.NS",
-    "TECHM.NS", "INDUSINDBK.NS", "HINDALCO.NS", "DRREDDY.NS", "SBILIFE.NS",
-    "CIPLA.NS", "BAJAJ-AUTO.NS", "EICHERMOT.NS", "DIVISLAB.NS", "APOLLOHOSP.NS",
-    "BRITANNIA.NS", "TATACONSUM.NS", "HEROMOTOCO.NS", "SHREECEM.NS", "BPCL.NS",
-    "HAL.NS", "BEL.NS", "IRFC.NS", "BHEL.NS", "RVNL.NS", "PFC.NS", "RECLTD.NS",
-    "JINDALSTEL.NS", "TATASTEEL.NS", "SAIL.NS", "GAIL.NS", "DLF.NS", "LODHA.NS",
-    "GODREJCP.NS", "DABUR.NS", "HAVELLS.NS", "POLYCAB.NS", "DIXON.NS", "IDEA.NS",
-    "PNB.NS", "BOB.NS", "CANBK.NS", "UNIONBANK.NS", "IOB.NS", "YESBANK.NS",
-    "SUZLON.NS", "NHPC.NS", "SJVN.NS", "IREDA.NS", "J&KBANK.NS"
+    "TATASTEEL.NS", "JSWSTEEL.NS", "JINDALSTEL.NS", "SAIL.NS", "RELIANCE.NS", "TCS.NS", "HDFCBANK.NS", "ICICIBANK.NS", "INFY.NS", "SBIN.NS",
+    "BHARTIARTL.NS", "ITC.NS", "HINDUNILVR.NS", "LT.NS", "BAJFINANCE.NS", "KOTAKBANK.NS", "HCLTECH.NS", "ASIANPAINT.NS", "AXISBANK.NS", "MARUTI.NS",
+    "SUNPHARMA.NS", "TITAN.NS", "BAJAJFINSV.NS", "WIPRO.NS", "ULTRACEMCO.NS", "ONGC.NS", "NESTLEIND.NS", "POWERGRID.NS", "TRENT.NS", "ADANIENT.NS",
+    "ZOMATO.NS", "JIOFIN.NS", "TVSMOTOR.NS", "TATAMOTORS.NS", "M&M.NS", "NTPC.NS", "COALINDIA.NS", "GRASIM.NS", "TECHM.NS", "INDUSINDBK.NS",
+    "HINDALCO.NS", "DRREDDY.NS", "SBILIFE.NS", "CIPLA.NS", "BAJAJ-AUTO.NS", "EICHERMOT.NS", "DIVISLAB.NS", "APOLLOHOSP.NS", "BRITANNIA.NS", "TATACONSUM.NS",
+    "HEROMOTOCO.NS", "SHREECEM.NS", "BPCL.NS", "HAL.NS", "BEL.NS", "IRFC.NS", "BHEL.NS", "RVNL.NS", "PFC.NS", "RECLTD.NS",
+    "DLF.NS", "LODHA.NS", "GAIL.NS", "GODREJCP.NS", "DABUR.NS", "HAVELLS.NS", "POLYCAB.NS", "DIXON.NS", "IDEA.NS", "PNB.NS",
+    "BOB.NS", "CANBK.NS", "UNIONBANK.NS", "IOB.NS", "YESBANK.NS", "SUZLON.NS", "NHPC.NS", "SJVN.NS", "IREDA.NS", "J&KBANK.NS",
+    "ADANIPOWER.NS", "ADANIPORTS.NS", "AMBUJACEM.NS", "APOLLOTYRE.NS", "ASHOKLEY.NS", "AUIP.NS", "AUBANK.NS", "AUROPHARMA.NS", "BANDHANBNK.NS", "BANKINDIA.NS",
+    "BERGEPAINT.NS", "BHARATFORG.NS", "BIOCON.NS", "CHOLAFIN.NS", "COFORGE.NS", "COLPAL.NS", "CONCOR.NS", "CUMMINSIND.NS", "ESCORTS.NS", "EXIDEIND.NS",
+    "FEDERALBNK.NS", "GLENMARK.NS", "GMRINFRA.NS", "GODREJPROP.NS", "GUJGASLTD.NS", "HDFCLIFE.NS", "IDFCFIRSTB.NS", "IEX.NS", "IGL.NS", "INDIACEM.NS",
+    "INDIAMART.NS", "INDIGO.NS", "INDUSTOWER.NS", "IOC.NS", "IPCALAB.NS", "JKCEMENT.NS", "JUBLFOOD.NS", "KOTAKBANK.NS", "LICHSGFIN.NS", "LTIM.NS",
+    "LUPIN.NS", "MANAPPURAM.NS", "MARICO.NS", "MCDOWELL-N.NS", "MCX.NS", "METROPOLIS.NS", "MFSL.NS", "MGL.NS", "MOTHERSON.NS", "MPHASIS.NS",
+    "MRF.NS", "MUTHOOTFIN.NS", "NATIONALUM.NS", "NAVINFLUOR.NS", "NMDC.NS", "OBEROIRLTY.NS", "OFSS.NS", "PAGEIND.NS", "PEL.NS", "PERSISTENT.NS",
+    "PETRONET.NS", "PIDILITIND.NS", "PIIND.NS", "PNB.NS", "POLYCAB.NS", "PVRINOX.NS", "RAMCOCEM.NS", "RBLBANK.NS", "RECLTD.NS", "SBICARD.NS",
+    "SHREECEM.NS", "SIEMENS.NS", "SRF.NS", "SYNGENE.NS", "TATACOMM.NS", "TATACONSUM.NS", "TATAELXSI.NS", "TATAPOWER.NS", "TATASTEEL.NS", "TORNTPOWER.NS",
+    "TRENT.NS", "TVSMOTOR.NS", "UBL.NS", "UHR.NS", "UNITDSPR.NS", "VOLTAS.NS", "ZEEL.NS", "ZYDUSLIFE.NS", "ABB.NS", "ACC.NS",
+    "AIAENG.NS", "ALKEM.NS", "ALOKINDS.NS", "APARINDS.NS", "ASTERDM.NS", "ATUL.NS", "AVANTIFEED.NS", "BALKRISIND.NS", "BALRAMCHIN.NS", "BATAINDIA.NS",
+    "BDL.NS", "BEML.NS", "BLUESTARCO.NS", "BSOFT.NS", "CAMPUS.NS", "CASTROLIND.NS", "CEATLTD.NS", "CENTURYPLY.NS", "CESC.NS", "CGPOWER.NS",
+    "CHAMBLFERT.NS", "CHENNPETRO.NS", "CIEINDIA.NS", "CITYUNIONB.NS", "CLEAN.NS", "COROMANDEL.NS", "CRAFTSMAN.NS", "CROMPTON.NS", "CYIENT.NS", "DATAPATTNS.NS",
+    "DEEPAKFERT.NS", "DEEPAKNTR.NS", "DELHIVERY.NS", "DEVYANI.NS", "DIXON.NS", "EASEMYTRIP.NS", "EDELWEISS.NS", "EIDPARRY.NS", "ELGIEQUIP.NS", "EMAMILTD.NS",
+    "ENDURANCE.NS", "ENGINERSIN.NS", "EPL.NS", "ERIS.NS", "FSL.NS", "FORTIS.NS", "GAEL.NS", "GESHIP.NS", "GICRE.NS", "GNFC.NS",
+    "GOCOLORS.NS", "GPPL.NS", "GRANULES.NS", "GRAPHITE.NS", "GRSE.NS", "GSFC.NS", "GSPL.NS", "GUJALKALI.NS", "HAPPSTMNDS.NS", "HDFCAMC.NS",
+    "HEG.NS", "HFCL.NS", "HGINFRA.NS", "HIKAL.NS", "HINDCOPPER.NS", "HINDZINC.NS", "HUDCO.NS", "IDBI.NS", "IDFC.NS", "IIFL.NS",
+    "IRB.NS", "ITI.NS", "JBMA.NS", "JSL.NS", "JUSTDIAL.NS", "JYOTHYLAB.NS", "KALYANKJIL.NS", "KEI.NS", "KIMS.NS", "KNRCON.NS",
+    "KPITTECH.NS", "KRBL.NS", "L&TFH.NS", "LAURUSLABS.NS", "LXCHEM.NS", "MAHINDCIE.NS", "MAHLOG.NS", "MAPMYINDIA.NS", "MASTEK.NS", "MAXHEALTH.NS",
+    "MAZDOCK.NS", "MEDANTA.NS", "MEDPLUS.NS", "MSUMI.NS", "MTARTECH.NS", "NAZARA.NS", "NH.NS", "NLCINDIA.NS", "NSL.NS", "NYKAA.NS",
+    "OIL.NS", "PATANJALI.NS", "PAYTM.NS", "PHOENIXLTD.NS", "PPLPHARMA.NS", "PRINCEPIPE.NS", "PRIVISCL.NS", "QUESS.NS", "RADICO.NS", "RAJESHEXPO.NS",
+    "RATNAMANI.NS", "RAYMOND.NS", "REDINGTON.NS", "RELAXO.NS", "RHIM.NS", "RITES.NS", "ROLEXTURBO.NS", "ROSSARI.NS", "ROUTE.NS", "RVNL.NS",
+    "SAPPHIRE.NS", "SFL.NS", "SHOPERSTOP.NS", "SHREECEM.NS", "SHYAMMETL.NS", "SKFINDIA.NS", "SONACOMS.NS", "SONATSOFTW.NS", "STARHEALTH.NS", "SUMICHEM.NS",
+    "SUPREMEIND.NS", "SURYAROSNI.NS", "SYMPHONY.NS", "TATAINVEST.NS", "TEAMLEASE.NS", "THYROCARE.NS", "TIINDIA.NS", "TRIDENT.NS", "TRITURBINE.NS", "TTML.NS",
+    "TV18BRDCST.NS", "UJJIVANSFB.NS", "UTIAMC.NS", "VGUARD.NS", "VIJAYA.NS", "VINATIORGA.NS", "VIPIND.NS", "VTL.NS", "WELCORP.NS", "WELSPUNIND.NS",
+    "WHIRLPOOL.NS", "ZENSARTECH.NS"
 ];
 
-// Technical Indicators
-const calculateEMAArray = (quotes, period) => {
-    if (quotes.length === 0) return [];
-    const k = 2 / (period + 1);
-    let ema = quotes[0].close;
-    return quotes.map(q => ema = (q.close - ema) * k + ema);
-};
-
-const calculateRSI = (q, period = 14) => {
-    if (q.length <= period) return 50;
-    let gains = 0, losses = 0;
-    for (let i = q.length - period; i < q.length; i++) {
-        const diff = q[i].close - q[i - 1].close;
-        if (diff >= 0) gains += diff; else losses -= diff;
-    }
-    const rs = (gains / period) / (losses / period || 1);
-    return 100 - (100 / (1 + rs));
-};
-
-// Advanced Support/Resistance Pivot Engine
-const getPivots = (quotes, window = 10) => {
+// 🔧 High-Precision Pivot Logic for Price Action
+const findKeyLevels = (quotes) => {
+    const window = 15;
     const pivots = [];
     for (let i = window; i < quotes.length - window; i++) {
         const slice = quotes.slice(i - window, i + window + 1);
         const lows = slice.map(q => q.low);
         const highs = slice.map(q => q.high);
-        if (quotes[i].low === Math.min(...lows)) pivots.push({ index: i, price: quotes[i].low, type: 'bottom' });
-        if (quotes[i].high === Math.max(...highs)) pivots.push({ index: i, price: quotes[i].high, type: 'top' });
+        if (quotes[i].low === Math.min(...lows)) pivots.push({ price: quotes[i].low, index: i, type: 'SUPPORT' });
+        if (quotes[i].high === Math.max(...highs)) pivots.push({ price: quotes[i].high, index: i, type: 'RESISTANCE' });
     }
     return pivots;
 };
 
-// 🕯️ Refined Candlestick Engine
-const detectBullishCandle = (quotes) => {
-    if (quotes.length < 5) return { found: false, type: "" };
+// 🕯️ Candle Helper
+const isNeutral = (q) => Math.abs(q.close - q.open) < (q.high - q.low) * 0.3;
+const isBullish = (q) => q.close > q.open;
+const isBearish = (q) => q.close < q.open;
+
+// 🌊 DEEP SEARCH WAVE ENGINE (ZIGZAG 3%)
+const getZigZag = (data, threshold = 0.03) => {
+    const points = [];
+    if (!data.length) return [];
+    let lastApex = { ...data[0], index: 0 };
+    let trend = 0;
+
+    data.forEach((q, i) => {
+        const price = (q.high + q.low) / 2;
+        const diff = (price - lastApex.close) / lastApex.close;
+        if (trend === 0) {
+            if (diff > threshold) trend = 1;
+            else if (diff < -threshold) trend = -1;
+        } else if (trend === 1) {
+            if (price > lastApex.high) lastApex = { ...q, index: i };
+            else if (diff < -threshold) {
+                points.push(lastApex);
+                trend = -1;
+                lastApex = { ...q, index: i };
+            }
+        } else if (trend === -1) {
+            if (price < lastApex.low) lastApex = { ...q, index: i };
+            else if (diff > threshold) {
+                points.push(lastApex);
+                trend = 1;
+                lastApex = { ...q, index: i };
+            }
+        }
+    });
+    points.push(lastApex);
+    return points;
+};
+
+// 🧠 PAPA DEEP SEARCH ENGINE
+const detectPAPAPatterns = (quotes) => {
+    if (quotes.length < 60) return [];
     const last = quotes[quotes.length - 1];
     const prev = quotes[quotes.length - 2];
     const prev2 = quotes[quotes.length - 3];
-    const body = Math.abs(last.close - last.open);
-    const upperWick = last.high - Math.max(last.open, last.close);
-    const lowerWick = Math.min(last.open, last.close) - last.low;
-    const prevBody = Math.abs(prev.close - prev.open);
+    const prev3 = quotes[quotes.length - 4];
+    const pivots = findKeyLevels(quotes);
+    const history = quotes.slice(-40, -1);
+    const avgBody = history.reduce((s, q) => s + Math.abs(q.close - q.open), 0) / history.length;
+    const avgVol = history.reduce((s, q) => s + q.volume, 0) / history.length;
 
-    // Morning Star (3-candle pattern)
-    if (prev2.close < prev2.open && prevBody < (Math.abs(prev2.close - prev2.open) * 0.3) && last.close > last.open && last.close > (prev2.open + prev2.close) / 2) {
-        return { found: true, type: "Morning Star" };
-    }
-    // Bullish Engulfing
-    if (last.close > last.open && prev.close < prev.open && last.close > prev.open && last.open < prev.close) {
-        return { found: true, type: "Bullish Engulfing" };
-    }
-    // Hammer (At Bottom)
-    if (lowerWick > 2 * body && upperWick < 0.2 * body) {
-        return { found: true, type: "Hammer" };
-    }
-    // Inverted Hammer (At Bottom)
-    if (upperWick > 2 * body && lowerWick < 0.2 * body) {
-        return { found: true, type: "Inverted Hammer" };
-    }
-    // Piercing Line
-    if (prev.close < prev.open && last.close > last.open && last.open < prev.low && last.close > (prev.open + prev.close) / 2) {
-        return { found: true, type: "Piercing Line" };
+    const majorResists = pivots.filter(p => p.type === 'RESISTANCE').map(p => p.price);
+    const majorSupports = pivots.filter(p => p.type === 'SUPPORT').map(p => p.price);
+    const majorRes = majorResists.length ? Math.max(...majorResists) : last.close * 1.05;
+    const majorSup = majorSupports.length ? Math.min(...majorSupports) : last.close * 0.95;
+
+    const findings = [];
+
+    // 1. Double Top (Deep Search)
+    const recentTops = pivots.filter(p => p.type === 'RESISTANCE' && p.index < quotes.length - 5);
+    if (recentTops.length >= 1) {
+        const lastTop = recentTops[recentTops.length - 1];
+        const isApproaching = Math.abs(last.high - lastTop.price) / lastTop.price < 0.015;
+        const weaponOfBulls = quotes.slice(lastTop.index - 5, lastTop.index + 1).filter(isBullish).pop();
+        if (isApproaching && (isNeutral(last) || isBearish(last)) && weaponOfBulls && last.close < weaponOfBulls.low) {
+            findings.push({ type: 'DOUBLE_TOP', message: 'Bearish trigger: Weapon of the bulls broken at resistance', stop_loss: weaponOfBulls.high, target: last.close - (lastTop.price - last.close) });
+        }
     }
 
-    return { found: false };
+    // 2. Double Bottom (Deep Search)
+    const recentBottoms = pivots.filter(p => p.type === 'SUPPORT' && p.index < quotes.length - 5);
+    if (recentBottoms.length >= 1) {
+        const lastBottom = recentBottoms[recentBottoms.length - 1];
+        const isApproaching = Math.abs(last.low - lastBottom.price) / lastBottom.price < 0.015;
+        const weaponOfBears = quotes.slice(lastBottom.index - 5, lastBottom.index + 1).filter(isBearish).pop();
+        if (isApproaching && (isNeutral(last) || isBullish(last)) && weaponOfBears && last.close > weaponOfBears.high) {
+            findings.push({ type: 'DOUBLE_BOTTOM', message: 'Bullish trigger: Weapon of the bears broken at support', stop_loss: weaponOfBears.low, target: last.close + (last.close - lastBottom.price) });
+        }
+    }
+
+    // 3. Three White Soldiers (Price Action Correction Logic)
+    if (quotes.length > 5) {
+        const q4 = quotes[quotes.length - 5];
+        const q3 = quotes[quotes.length - 4];
+        if (isBullish(q4) && isBullish(q3) && q3.close > q4.close) {
+            const h2 = q3.high;
+            const l2 = q3.low;
+            // Correction check
+            if (prev.close < h2 && prev.low > l2 && last.close > h2 && isBullish(last)) {
+                findings.push({ type: 'THREE_WHITE_SOLDIERS', message: 'Soldiers confirmed: Breakout after correction of 2nd candle', stop_loss: q4.low, target: 'Major Resistance' });
+            }
+        }
+    }
+
+    // 4. Three Black Crows
+    if (quotes.length > 5) {
+        const q4 = quotes[quotes.length - 5];
+        const q3 = quotes[quotes.length - 4];
+        if (isBearish(q4) && isBearish(q3) && q3.close < q4.close) {
+            const h2 = q3.high;
+            const l2 = q3.low;
+            if (prev.close > l2 && prev.high < h2 && last.close < l2 && isBearish(last)) {
+                findings.push({ type: 'THREE_BLACK_CROWS', message: 'Crows confirmed: Breakdown after correction of 2nd candle', stop_loss: q4.high, target: 'Major Support' });
+            }
+        }
+    }
+
+    // 5. Bulls Counter Attack
+    if (last.open < majorSup && last.close > majorSup && isBullish(last)) {
+        findings.push({ type: 'BULLS_COUNTER_ATTACK', message: 'Price re-entered above breakdown level with volume', stop_loss: last.low, target: 'Major Resistance' });
+    }
+
+    // 6. Bears Counter Attack
+    if (last.open > majorRes && last.close < majorRes && isBearish(last)) {
+        findings.push({ type: 'BEARS_COUNTER_ATTACK', message: 'Price re-entered below breakout level with volume', stop_loss: last.high, target: 'Major Support' });
+    }
+
+    // 7. Sandwich Pattern
+    if (prev3 && prev2 && prev) {
+        const isG_R_G = isBullish(prev3) && isBearish(prev2) && isBullish(prev);
+        const isR_G_R = isBearish(prev3) && isBullish(prev2) && isBearish(prev);
+        if ((isG_R_G && last.close > prev3.high) || (isR_G_R && last.close < prev3.low)) {
+            findings.push({ type: 'SANDWICH_PATTERN', message: 'Sandwich Break: Price escaped the alternate sequence range', stop_loss: isG_R_G ? last.low : last.high, target: 'Major Level' });
+        }
+    }
+
+    // 8. Rounding Bottom
+    const sliceBottom = history.slice(-15);
+    const hasNeutralCurve = sliceBottom.filter(isNeutral).length > 5;
+    if (hasNeutralCurve && last.close > Math.max(...sliceBottom.map(q => q.high)) && isBullish(last)) {
+        findings.push({ type: 'ROUNDING_BOTTOM', message: 'Strong breakout candle closing above sideways range base', stop_loss: Math.min(...sliceBottom.map(q => q.low)), target: 'Major Resistance' });
+    }
+
+    // 9. Rounding Top
+    const sliceTop = history.slice(-15);
+    const hasNeutralCurveTop = sliceTop.filter(isNeutral).length > 5;
+    if (hasNeutralCurveTop && last.close < Math.min(...sliceTop.map(q => q.low)) && isBearish(last)) {
+        findings.push({ type: 'ROUNDING_TOP', message: 'Strong breakdown candle closing below sideways range peak', stop_loss: Math.max(...sliceTop.map(q => q.high)), target: 'Major Support' });
+    }
+
+    // 10. Genuine Breakout (Shakeout Check)
+    const hasShakeout = history.some(q => q.high > majorRes && q.close < majorRes);
+    if (hasShakeout && last.close > majorRes && last.volume > avgVol * 1.5 && isBullish(last)) {
+        findings.push({ type: 'GENUINE_BO', message: 'Genuine Breakout: Confirmed with prior shakeout at resistance', stop_loss: last.low, target: 'Major Resistance Project' });
+    }
+
+    // 11. Genuine Breakdown
+    const hasShakeoutBD = history.some(q => q.low < majorSup && q.close > majorSup);
+    if (hasShakeoutBD && last.close < majorSup && last.volume > avgVol * 1.5 && isBearish(last)) {
+        findings.push({ type: 'GENUINE_BD', message: 'Genuine Breakdown: Confirmed with prior shakeout at support', stop_loss: last.high, target: 'Major Support Project' });
+    }
+
+    // 12. Fake Breakout (No Shakeout)
+    const noShakeout = !history.some(q => q.high > majorRes && q.close < majorRes);
+    if (noShakeout && prev.close > majorRes && last.close < majorRes && isBearish(last)) {
+        findings.push({ type: 'FAKE_BO', message: 'Fake Breakout: Bulls trapped. No shakeout occurred before the trap', stop_loss: last.high, target: 'Major Support' });
+    }
+
+    // 13. Fake Breakdown
+    const noShakeoutBD = !history.some(q => q.low < majorSup && q.close > majorSup);
+    if (noShakeoutBD && prev.close < majorSup && last.close > majorSup && isBullish(last)) {
+        findings.push({ type: 'FAKE_BD', message: 'Fake Breakdown: Bears trapped. No shakeout occurred before the trap', stop_loss: last.low, target: 'Major Resistance' });
+    }
+
+    // 14 & 15. Gaps
+    const gapUp = (last.open - prev.high) / prev.high > 0.015;
+    if (gapUp && last.close >= last.open) findings.push({ type: 'GAP_UP', message: 'Direct Gap Up sustained above resistance levels', stop_loss: last.open, target: 'Gap Sustained' });
+
+    const gapDown = (prev.low - last.open) / prev.low > 0.015;
+    if (gapDown && last.close <= last.open) findings.push({ type: 'GAP_DOWN', message: 'Direct Gap Down sustained below support levels', stop_loss: last.open, target: 'Gap Sustained' });
+
+    return findings.map(f => ({
+        ...f,
+        symbol: '', price: last.close, volume: last.volume, avg_volume: avgVol,
+        date: last.date.toISOString().split('T')[0],
+        resistance: majorRes, support: majorSup,
+        stop_loss: f.stop_loss || last.close * 0.97,
+        target: f.target || last.close * 1.12
+    }));
 };
 
-const detectBearishCandle = (quotes) => {
-    if (quotes.length < 5) return { found: false, type: "" };
+// 🚀 3rd WAVE SETUP ENGINE (PRO)
+const detectThirdWaveSetup = (quotes) => {
+    if (quotes.length < 100) return [];
+    const zigzags = getZigZag(quotes, 0.04);
+    if (zigzags.length < 3) return [];
+
     const last = quotes[quotes.length - 1];
     const prev = quotes[quotes.length - 2];
-    const prev2 = quotes[quotes.length - 3];
-    const body = Math.abs(last.close - last.open);
-    const upperWick = last.high - Math.max(last.open, last.close);
-    const lowerWick = Math.min(last.open, last.close) - last.low;
-    const prevBody = Math.abs(prev.close - prev.open);
+    const w2 = zigzags[zigzags.length - 1]; // Current leg (Correction)
+    const w1 = zigzags[zigzags.length - 2]; // Impulse Peak
+    const w0 = zigzags[zigzags.length - 3]; // Starting Base
 
-    // Evening Star
-    if (prev2.close > prev2.open && prevBody < (Math.abs(prev2.close - prev2.open) * 0.3) && last.close < last.open && last.close < (prev2.open + prev2.close) / 2) {
-        return { found: true, type: "Evening Star" };
-    }
-    // Bearish Engulfing
-    if (last.close < last.open && prev.close > prev.open && last.close < prev.open && last.open > prev.close) {
-        return { found: true, type: "Bearish Engulfing" };
-    }
-    // Shooting Star
-    if (upperWick > 2 * body && lowerWick < 0.2 * body) {
-        return { found: true, type: "Shooting Star" };
-    }
-    // Hanging Man
-    if (lowerWick > 2 * body && upperWick < 0.2 * body) {
-        return { found: true, type: "Hanging Man" };
-    }
-    // Dark Cloud Cover
-    if (prev.close > prev.open && last.close < last.open && last.open > prev.high && last.close < (prev.open + prev.close) / 2) {
-        return { found: true, type: "Dark Cloud Cover" };
-    }
+    const findings = [];
+    const avgVol = quotes.slice(-20).reduce((s, q) => s + q.volume, 0) / 20;
 
-    return { found: false };
-};
+    // Bullish 3rd Wave Checklist
+    const isW1Impulse = w1.high > w0.low * 1.05;
+    const isW2Correction = w2.low > w0.low && w2.low < w1.high; // Higher Low
+    const isBreakout = last.close > w1.high && prev.close <= w1.high;
 
-// 📈 Refined Chart Pattern Engine
-const detectBullishComplexPatternsAI = (quotes) => {
-    if (quotes.length < 80) return null;
-    const pivots = getPivots(quotes, 8);
-    const bottoms = pivots.filter(p => p.type === 'bottom');
-    const tops = pivots.filter(p => p.type === 'top');
-    const last = quotes[quotes.length - 1];
-
-    if (bottoms.length < 2) return null;
-
-    // Double Bottom - Precise check
-    const b1 = bottoms[bottoms.length - 2];
-    const b2 = bottoms[bottoms.length - 1];
-    if (Math.abs(b1.price - b2.price) / b1.price < 0.012 && b2.index < quotes.length - 5) {
-        const midTops = tops.filter(t => t.index > b1.index && t.index < b2.index);
-        if (midTops.length > 0) {
-            const neckline = Math.max(...midTops.map(t => t.price));
-            if (last.close > neckline) return "Double Bottom (Confirmed Breakout)";
-        }
+    if (isW1Impulse && isW2Correction && isBreakout) {
+        findings.push({
+            type: '3rd_WAVE_BULLISH',
+            message: 'Elliott Wave 3 Launch: Confirmed Wave 1 Breakout with Higher Low structure',
+            checklist: [
+                { label: "Impulse: Strong Wave 1 found", status: true },
+                { label: "Correction: Higher Low (W2 > W0)", status: true },
+                { label: "Launch: Wave 1 Peak Broken", status: true },
+                { label: "Volume: ABOVE Average (MUST)", status: last.volume > avgVol * 1.2 }
+            ],
+            price: last.close,
+            stop_loss: w2.low,
+            target: w1.high + (w1.high - w0.low) * 1.62,
+            date: last.date.toISOString().split('T')[0],
+            score: last.volume > avgVol ? 5 : 4
+        });
     }
 
-    // Inverted Head & Shoulders
-    if (bottoms.length >= 3) {
-        const s1 = bottoms[bottoms.length - 3];
-        const head = bottoms[bottoms.length - 2];
-        const s2 = bottoms[bottoms.length - 1];
-        if (head.price < s1.price && head.price < s2.price && Math.abs(s1.price - s2.price) / s1.price < 0.02) {
-            return "Inverted Head & Shoulders (Bullish)";
-        }
-    }
-
-    // Rounding Bottom / Cup & Handle
-    const recentSixMonths = quotes.slice(-120);
-    const minPrice = Math.min(...recentSixMonths.map(q => q.low));
-    const maxPrice = Math.max(...recentSixMonths.map(q => q.high));
-    if (last.close > maxPrice * 0.95 && minPrice < last.close * 0.8) {
-        return "Rounding Bottom/Cup & Handle (AI detected)";
-    }
-
-    // Flag Breakout
-    const poleStart = quotes.length - 20;
-    const poleEnd = quotes.length - 6;
-    const rise = (quotes[poleEnd].close - quotes[poleStart].close) / quotes[poleStart].close;
-    if (rise > 0.06) {
-        const flagSlice = quotes.slice(poleEnd, -1);
-        const flagHigh = Math.max(...flagSlice.map(q => q.high));
-        if (last.close > flagHigh) return "Bullish Flag Breakout";
-    }
-
-    return null;
-};
-
-const detectBearishComplexPatternsAI = (quotes) => {
-    if (quotes.length < 80) return null;
-    const pivots = getPivots(quotes, 8);
-    const bottoms = pivots.filter(p => p.type === 'bottom');
-    const tops = pivots.filter(p => p.type === 'top');
-    const last = quotes[quotes.length - 1];
-
-    if (tops.length < 2) return null;
-
-    // Double Top - Precise check
-    const t1 = tops[tops.length - 2];
-    const t2 = tops[tops.length - 1];
-    if (Math.abs(t1.price - t2.price) / t1.price < 0.012 && t2.index < quotes.length - 5) {
-        const midBottoms = bottoms.filter(b => b.index > t1.index && b.index < t2.index);
-        if (midBottoms.length > 0) {
-            const neckline = Math.min(...midBottoms.map(b => b.price));
-            if (last.close < neckline) return "Double Top (Confirmed Breakdown)";
-        }
-    }
-
-    // Head & Shoulders
-    if (tops.length >= 3) {
-        const s1 = tops[tops.length - 3];
-        const head = tops[tops.length - 2];
-        const s2 = tops[tops.length - 1];
-        if (head.price > s1.price && head.price > s2.price && Math.abs(s1.price - s2.price) / s1.price < 0.02) {
-            return "Head & Shoulders (Bearish)";
-        }
-    }
-
-    // Rounding Top
-    const recentHighs = quotes.slice(-100).map(q => q.high);
-    const peak = Math.max(...recentHighs);
-    if (last.close < peak * 0.92 && Math.max(...quotes.slice(-20).map(q => q.high)) < peak * 0.98) {
-        return "Rounding Top (AI detected)";
-    }
-
-    // Flag Breakdown
-    const poleStart = quotes.length - 20;
-    const poleEnd = quotes.length - 6;
-    const drop = (quotes[poleStart].close - quotes[poleEnd].close) / quotes[poleStart].close;
-    if (drop > 0.06) {
-        const flagSlice = quotes.slice(poleEnd, -1);
-        const flagLow = Math.min(...flagSlice.map(q => q.low));
-        if (last.close < flagLow) return "Bearish Flag Breakdown";
-    }
-
-    return null;
+    return findings;
 };
 
 // Data Fetching
 const fetchYahooData = async (symbol, interval) => {
     try {
-        let range = '1y'; // Default for daily
+        let range = '1y';
+        if (interval === '15m') range = '5d';
         if (interval === '1h') range = '1mo';
         if (interval === '1wk') range = '5y';
         if (interval === '1mo') range = 'max';
 
         const url = `https://query2.finance.yahoo.com/v8/finance/chart/${symbol}?interval=${interval}&range=${range}`;
         const response = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0' } });
-        if (!response.ok) return [];
+        if (!response.ok) {
+            console.error(`Yahoo API error for ${symbol}: ${response.status}`);
+            return [];
+        }
         const data = await response.json();
-        const res = data.chart.result[0];
+        const res = data.chart.result?.[0];
         if (!res || !res.timestamp) return [];
         const q = res.indicators.quote[0];
+        const adj = res.indicators.adjclose?.[0]?.adjclose || q.close;
+
         return res.timestamp.map((t, i) => ({
             date: new Date(t * 1000),
             open: q.open[i] || q.close[i],
             high: q.high[i] || q.close[i],
             low: q.low[i] || q.close[i],
-            close: q.close[i],
+            close: q.close[i] || adj[i],
             volume: q.volume[i] || 0
-        })).filter(x => x.close != null);
-    } catch (e) { return []; }
+        })).filter(x => x.close != null && !isNaN(x.close));
+    } catch (e) {
+        console.error(`Fetch error for ${symbol}:`, e.message);
+        return [];
+    }
 };
 
 // API Endpoints
+app.get('/api/scan', async (req, res) => {
+    const timeframe = req.query.timeframe || '1d';
+    const category = req.query.category || 'ALL';
+    const results = [];
+
+    for (let i = 0; i < NIFTY_STOCKS.length; i += 10) {
+        const batch = NIFTY_STOCKS.slice(i, i + 10);
+        await Promise.all(batch.map(async (symbol) => {
+            const data = await fetchYahooData(symbol, timeframe);
+            if (symbol.includes('STEEL') || symbol.includes('SAIL')) {
+                console.log(`Scanning ${symbol}: Data Length = ${data.length}`);
+            }
+            if (data.length < 50) return;
+            const patterns = detectPAPAPatterns(data);
+            patterns.forEach(p => {
+                if (category === 'ALL' || p.type === category) {
+                    results.push({ ...p, symbol: symbol.replace('.NS', '') });
+                }
+            });
+        }));
+    }
+    res.json({ status: "success", data: results });
+});
+
 app.get('/api/bullish-setups', async (req, res) => {
     const timeframe = req.query.timeframe || '1d';
     const results = [];
-    const batchSize = 15;
-    for (let i = 0; i < NIFTY_STOCKS.length; i += batchSize) {
-        const batch = NIFTY_STOCKS.slice(i, i + batchSize);
+    for (let i = 0; i < NIFTY_STOCKS.length; i += 10) {
+        const batch = NIFTY_STOCKS.slice(i, i + 10);
         await Promise.all(batch.map(async (symbol) => {
             const data = await fetchYahooData(symbol, timeframe);
-            if (data.length < 100) return;
-
-            const last = data[data.length - 1];
-            const history = data.slice(-30);
-            const avgVol = history.reduce((s, q) => s + q.volume, 0) / 30;
-            const ema5 = calculateEMAArray(data, 5);
-            const ema13 = calculateEMAArray(data, 13);
-            const ema50 = calculateEMAArray(data, 50);
-            const ema100 = calculateEMAArray(data, 100);
-            const rsi = calculateRSI(data);
-            const ma12 = calculateEMAArray(data, 12);
-            const ma26 = calculateEMAArray(data, 26);
-            const macd = ma12[ma12.length - 1] - ma26[ma26.length - 1];
-
-            const aiCandle = detectBullishCandle(data);
-            const aiPattern = detectBullishComplexPatternsAI(data);
-
-            const checklist = [
-                { id: 1, label: "Bullish Candlestick Pattern", status: aiCandle.found, detail: aiCandle.type || "Scanning..." },
-                { id: 2, label: "Volume Confirmation", status: last.volume > avgVol * 1.2, detail: "Heavy Volume" },
-                { id: 3, label: "Positive EMA Crossover (5/13/50)", status: ema5[ema5.length - 1] > ema13[ema13.length - 1] && ema13[ema13.length - 1] > ema50[ema50.length - 1], detail: "Trend Support" },
-                { id: 4, label: "Bullish Chart Pattern (AI)", status: !!aiPattern, detail: aiPattern || "Deep Geometry" },
-                { id: 5, label: "RSI Momentum (>60)", status: rsi > 60, detail: `RSI: ${rsi.toFixed(1)}` },
-                { id: 6, label: "MACD Upward (Above Zero)", status: macd > 0, detail: `MACD: ${macd.toFixed(2)}` },
-                { id: 7, label: "100/50 EMA Cross", status: ema5[ema5.length - 1] > ema50[ema50.length - 1], detail: "Positive Trend" },
-                { id: 8, label: "Fibonacci Retracement (Health)", status: last.low > data[data.length - 10].low, detail: "Healthy Pullback" },
-                { id: 9, label: "Divergence (Bullish)", status: rsi > 45 && last.close > data[data.length - 2].close, detail: "Strong Close" },
-                { id: 10, label: "Immediate Support", status: true, detail: `Support: ₹${(last.close * 0.98).toFixed(1)}` },
-                { id: 11, label: "Risk Reward Ratio (>3)", status: true, detail: "Target: ₹" + (last.close * 1.1).toFixed(1) }
-            ];
-
-            const score = checklist.filter(c => c.status).length;
-            const htfAlignment = last.close > ema50[ema50.length - 1];
-            const confidence = Math.min(100, (score / 11 * 75) + (htfAlignment ? 25 : 0));
-
-            if (score >= 4) {
-                results.push({
-                    symbol: symbol.replace('.NS', ''),
-                    price: last.close,
-                    score,
-                    confidence: Math.round(confidence),
-                    htf_alignment: htfAlignment,
-                    checklist,
-                    stop_loss: last.close * 0.97,
-                    target: last.close * 1.12,
-                    risk_reward: "4:1"
-                });
-            }
+            if (data.length < 50) return;
+            const patterns = detectPAPAPatterns(data);
+            const bullishPatterns = ['DOUBLE_BOTTOM', 'THREE_WHITE_SOLDIERS', 'BULLS_COUNTER_ATTACK', 'SANDWICH_PATTERN', 'ROUNDING_BOTTOM', 'GENUINE_BO', 'FAKE_BD', 'GAP_UP'];
+            patterns.forEach(p => {
+                if (bullishPatterns.includes(p.type)) {
+                    results.push({ ...p, symbol: symbol.replace('.NS', '') });
+                }
+            });
         }));
     }
     res.json({ status: "success", data: results });
@@ -317,63 +358,410 @@ app.get('/api/bullish-setups', async (req, res) => {
 app.get('/api/bearish-setups', async (req, res) => {
     const timeframe = req.query.timeframe || '1d';
     const results = [];
-    for (let i = 0; i < NIFTY_STOCKS.length; i += 15) {
-        const batch = NIFTY_STOCKS.slice(i, i + 15);
+    for (let i = 0; i < NIFTY_STOCKS.length; i += 10) {
+        const batch = NIFTY_STOCKS.slice(i, i + 10);
         await Promise.all(batch.map(async (symbol) => {
             const data = await fetchYahooData(symbol, timeframe);
-            if (data.length < 100) return;
-
-            const last = data[data.length - 1];
-            const history = data.slice(-30);
-            const avgVol = history.reduce((s, q) => s + q.volume, 0) / 30;
-            const ema5 = calculateEMAArray(data, 5);
-            const ema13 = calculateEMAArray(data, 13);
-            const ema50 = calculateEMAArray(data, 50);
-            const rsi = calculateRSI(data);
-            const ma12 = calculateEMAArray(data, 12);
-            const ma26 = calculateEMAArray(data, 26);
-            const macd = ma12[ma12.length - 1] - ma26[ma26.length - 1];
-
-            const aiCandle = detectBearishCandle(data);
-            const aiPattern = detectBearishComplexPatternsAI(data);
-
-            const checklist = [
-                { id: 1, label: "Bearish Candlestick Pattern", status: aiCandle.found, detail: aiCandle.type || "Scanning..." },
-                { id: 2, label: "Heavy Volume Confirmation", status: last.volume > avgVol * 1.2, detail: "Selling Pressure" },
-                { id: 3, label: "Negative EMA Cross (5/13/26)", status: ema5[ema5.length - 1] < ema13[ema13.length - 1], detail: "Downward Trend" },
-                { id: 4, label: "Bearish Chart Pattern (AI)", status: !!aiPattern, detail: aiPattern || "Deep Geometry" },
-                { id: 5, label: "RSI Weakness (<40)", status: rsi < 40, detail: `RSI: ${rsi.toFixed(1)}` },
-                { id: 6, label: "MACD Downward (Below Zero)", status: macd < 0, detail: `MACD: ${macd.toFixed(2)}` },
-                { id: 7, label: "Fibonacci (Watchful)", status: last.close < data[data.length - 5].close, detail: "Weak Breakdown" },
-                { id: 8, label: "Volume Divergence", status: last.volume > prevVol(data), detail: "Volume Escalation" },
-                { id: 9, label: "Resistance Check", status: true, detail: `Resistance: ₹${(last.high * 1.01).toFixed(1)}` },
-                { id: 10, label: "Target Projection", status: true, detail: `Target: ₹${(last.close * 0.9).toFixed(1)}` },
-                { id: 11, label: "Risk Reward Ratio (>3)", status: true, detail: "Ratio: 3.5:1" }
-            ];
-
-            const score = checklist.filter(c => c.status).length;
-            const htfAlignment = last.close < ema50[ema50.length - 1];
-            const confidence = Math.min(100, (score / 11 * 75) + (htfAlignment ? 25 : 0));
-
-            if (score >= 4) {
-                results.push({
-                    symbol: symbol.replace('.NS', ''),
-                    price: last.close,
-                    score,
-                    confidence: Math.round(confidence),
-                    htf_alignment: htfAlignment,
-                    checklist,
-                    stop_loss: last.close * 1.04,
-                    target: last.close * 0.88,
-                    risk_reward: "4:1"
-                });
-            }
+            if (data.length < 50) return;
+            const patterns = detectPAPAPatterns(data);
+            const bearishPatterns = ['DOUBLE_TOP', 'THREE_BLACK_CROWS', 'BEARS_COUNTER_ATTACK', 'SANDWICH_PATTERN', 'ROUNDING_TOP', 'GENUINE_BD', 'FAKE_BO', 'GAP_DOWN'];
+            patterns.forEach(p => {
+                if (bearishPatterns.includes(p.type)) {
+                    results.push({ ...p, symbol: symbol.replace('.NS', '') });
+                }
+            });
         }));
     }
     res.json({ status: "success", data: results });
 });
 
-const prevVol = (data) => data[data.length - 2].volume;
+app.get('/api/third-wave', async (req, res) => {
+    const timeframe = req.query.timeframe || '1d';
+    const results = [];
+    for (let i = 0; i < NIFTY_STOCKS.length; i += 10) {
+        const batch = NIFTY_STOCKS.slice(i, i + 10);
+        await Promise.all(batch.map(async (symbol) => {
+            const data = await fetchYahooData(symbol, timeframe);
+            if (data.length < 50) return;
+            const patterns = detectThirdWaveSetup(data);
+            patterns.forEach(p => {
+                results.push({ ...p, symbol: symbol.replace('.NS', '') });
+            });
+        }));
+    }
+    res.json({ status: "success", data: results });
+});
+
+// 📐 ENDING DIAGONAL ENGINE (PRO VERSION)
+const detectEndingDiagonal = (quotes) => {
+    if (quotes.length < 100) return [];
+    const last = quotes[quotes.length - 1];
+    const prev = quotes[quotes.length - 2];
+
+    // 1. ZigZag Implementation (3.5% threshold)
+    const getZigZag = (data, threshold = 0.035) => {
+        const points = [];
+        let lastApex = data[0];
+        let trend = 0; // 1 for up, -1 for down
+
+        data.forEach((q, i) => {
+            const price = (q.high + q.low) / 2;
+            const diff = (price - lastApex.close) / lastApex.close;
+
+            if (trend === 0) {
+                if (diff > threshold) trend = 1;
+                else if (diff < -threshold) trend = -1;
+            } else if (trend === 1) {
+                if (price > lastApex.high) lastApex = { ...q, index: i };
+                else if (diff < -threshold) {
+                    points.push(lastApex);
+                    trend = -1;
+                    lastApex = { ...q, index: i };
+                }
+            } else if (trend === -1) {
+                if (price < lastApex.low) lastApex = { ...q, index: i };
+                else if (diff > threshold) {
+                    points.push(lastApex);
+                    trend = 1;
+                    lastApex = { ...q, index: i };
+                }
+            }
+        });
+        points.push(lastApex);
+        return points;
+    };
+
+    const zigzags = getZigZag(quotes);
+    if (zigzags.length < 6) return []; // Need at least 5 waves
+
+    // Get last 5 zigzag points (Waves 1-5)
+    const w5p = zigzags[zigzags.length - 1];
+    const w4p = zigzags[zigzags.length - 2];
+    const w3p = zigzags[zigzags.length - 3];
+    const w2p = zigzags[zigzags.length - 4];
+    const w1p = zigzags[zigzags.length - 5];
+
+    // Helper: RSI(14)
+    const calculateRSI = (items, endIdx) => {
+        const slice = items.slice(Math.max(0, endIdx - 30), endIdx + 1);
+        if (slice.length < 15) return 50;
+        let gains = 0, losses = 0;
+        for (let i = 1; i < slice.length; i++) {
+            const diff = slice[i].close - slice[i - 1].close;
+            if (diff >= 0) gains += diff; else losses -= diff;
+        }
+        const rs = (gains / 14) / (losses / 14 || 1);
+        return 100 - (100 / (1 + rs));
+    };
+
+    const avgVol20 = quotes.slice(-20).reduce((s, q) => s + q.volume, 0) / 20;
+    const rsi3 = calculateRSI(quotes, w3p.index);
+    const rsi5 = calculateRSI(quotes, w5p.index);
+
+    // BEARISH ENDING DIAGONAL (At Top)
+    const isBearishED = w3p.high > w1p.high && // Wave 3 high above Wave 1 high
+        w5p.high > w3p.high && // Wave 5 marginal new high
+        w4p.low < w1p.high &&  // Wave 4 overlaps Wave 1 territory
+        w2p.low > w1p.low;      // Corrective structure
+
+    if (isBearishED) {
+        // Trendline Convergence check: slope of (1,3) vs slope of (2,4)
+        const topSlope = (w3p.high - w1p.high) / (w3p.index - w1p.index);
+        const botSlope = (w4p.low - w2p.low) / (w4p.index - w2p.index);
+        const isConverging = topSlope < botSlope; // Converging wedge
+
+        const volumeContracting = w1p.volume > w3p.volume && w3p.volume > w5p.volume;
+        const rsiDivergence = rsi5 < rsi3;
+
+        // Breakdown logic: Price breaks lower trendline
+        const expectedSupport = w4p.low + botSlope * (quotes.length - 1 - w4p.index);
+        const isBreakdown = last.close < expectedSupport && last.volume > avgVol20;
+
+        if (isBreakdown) {
+            return [{
+                type: 'ENDING_DIAGONAL_BEARISH',
+                message: 'Bearish ED (PRO): 5-Wave overlapping structure with RSI Divergence and Volume Breakout',
+                checklist: [
+                    { label: "Wave Structure: 1-3-5 Highs Confirmed", status: true },
+                    { label: "Wave 4/1 Overlap (3-3-3-3-3)", status: true },
+                    { label: "Convergence: Narrows Over Time", status: isConverging },
+                    { label: "RSI Divergence: W5 < W3", status: rsiDivergence },
+                    { label: "Volume Contracted: W1 > W5", status: volumeContracting },
+                    { label: "Breakout: Above 20D Avg Vol", status: true }
+                ],
+                start_date: w1p.date.toISOString().split('T')[0],
+                breakout_date: last.date.toISOString().split('T')[0],
+                price: last.close,
+                stop_loss: w5p.high,
+                target: w1p.low,
+                volume: last.volume,
+                avg_volume: avgVol20,
+                score: [isConverging, rsiDivergence, volumeContracting].filter(Boolean).length + 3
+            }];
+        }
+    }
+
+    // BULLISH ENDING DIAGONAL (At Bottom)
+    const isBullishED = w3p.low < w1p.low &&
+        w5p.low < w3p.low &&
+        w4p.high > w1p.low &&
+        w2p.high < w1p.high;
+
+    if (isBullishED) {
+        const topSlope = (w4p.high - w2p.high) / (w4p.index - w2p.index);
+        const botSlope = (w3p.low - w1p.low) / (w3p.index - w1p.index);
+        const isConverging = topSlope < botSlope;
+
+        const volumeContracting = w1p.volume > w3p.volume && w3p.volume > w5p.volume;
+        const rsiDivergence = rsi5 > rsi3;
+
+        const expectedResistance = w4p.high + topSlope * (quotes.length - 1 - w4p.index);
+        const isBreakout = last.close > expectedResistance && last.volume > avgVol20;
+
+        if (isBreakout) {
+            return [{
+                type: 'ENDING_DIAGONAL_BULLISH',
+                message: 'Bullish ED (PRO): 5-Wave overlapping structure with RSI Divergence and Volume Breakout',
+                checklist: [
+                    { label: "Wave Structure: 1-3-5 Lows Confirmed", status: true },
+                    { label: "Wave 4/1 Overlap (3-3-3-3-3)", status: true },
+                    { label: "Convergence: Narrows Over Time", status: isConverging },
+                    { label: "RSI Divergence: W5 > W3", status: rsiDivergence },
+                    { label: "Volume Contracted: W1 > W5", status: volumeContracting },
+                    { label: "Breakout: Above 20D Avg Vol", status: true }
+                ],
+                start_date: w1p.date.toISOString().split('T')[0],
+                breakout_date: last.date.toISOString().split('T')[0],
+                price: last.close,
+                stop_loss: w5p.low,
+                target: w1p.high,
+                volume: last.volume,
+                avg_volume: avgVol20,
+                score: [isConverging, rsiDivergence, volumeContracting].filter(Boolean).length + 3
+            }];
+        }
+    }
+
+    return [];
+};
+
+app.get('/api/ending-diagonal', async (req, res) => {
+    const timeframe = req.query.timeframe || '1d';
+    const results = [];
+    for (let i = 0; i < NIFTY_STOCKS.length; i += 10) {
+        const batch = NIFTY_STOCKS.slice(i, i + 10);
+        await Promise.all(batch.map(async (symbol) => {
+            const data = await fetchYahooData(symbol, timeframe);
+            if (data.length < 80) return;
+            const patterns = detectEndingDiagonal(data);
+            patterns.forEach(p => {
+                results.push({ ...p, symbol: symbol.replace('.NS', '') });
+            });
+        }));
+    }
+    res.json({ status: "success", data: results });
+});
+
+// 📐 TRIANGLE BREAKOUT ENGINE (PRO)
+const detectTriangleBreakout = (quotes) => {
+    if (quotes.length < 120) return [];
+    const zigzags = getZigZag(quotes, 0.035);
+    if (zigzags.length < 6) return []; // Points A, B, C, D, E
+
+    const last = quotes[quotes.length - 1];
+    const prev = quotes[quotes.length - 2];
+    const e = zigzags[zigzags.length - 1];
+    const d = zigzags[zigzags.length - 2];
+    const c = zigzags[zigzags.length - 3];
+    const b = zigzags[zigzags.length - 4];
+    const a = zigzags[zigzags.length - 5];
+
+    const findings = [];
+    const avgVol = quotes.slice(-20).reduce((s, q) => s + q.volume, 0) / 20;
+
+    // Triangle Geometry Check
+    const isConverging = (b.high - c.low) > (d.high - e.low);
+    const lowerHighs = d.high < b.high;
+    const higherLows = e.low > c.low;
+
+    if (lowerHighs && higherLows && isConverging) {
+        // Bullish Breakout
+        if (last.close > d.high && prev.close <= d.high) {
+            findings.push({
+                type: 'TRIANGLE_BREAKOUT_BULLISH',
+                message: 'Triangle Breakout PRO: A-B-C-D-E structure cleared with thrust',
+                checklist: [
+                    { label: "Waves: 5-Point Structure (A-E)", status: true },
+                    { label: "Convergence: Converging Wedge Confirmed", status: true },
+                    { label: "Ungli: Trigger Candle identified", status: true },
+                    { label: "Volume: Above Average on BO", status: last.volume > avgVol }
+                ],
+                price: last.close,
+                stop_loss: e.low,
+                target: last.close + (b.high - c.low),
+                date: last.date.toISOString().split('T')[0],
+                score: 5
+            });
+        }
+    }
+
+    return findings;
+};
+
+// 💎 SMM DECISION ENGINE (Double Screen System)
+const detectSMMSetup = async (symbol, currentInterval) => {
+    const higherIntervalMap = { '15m': '1h', '1h': '1d', '1d': '1wk', '1wk': '1mo' };
+    const higherInterval = higherIntervalMap[currentInterval] || '1mo';
+
+    const currentData = await fetchYahooData(symbol, currentInterval);
+    const higherData = await fetchYahooData(symbol, higherInterval);
+
+    if (currentData.length < 50 || higherData.length < 50) return [];
+
+    const last = currentData[currentData.length - 1];
+    const prev = currentData[currentData.length - 2];
+    const lastH = higherData[higherData.length - 1];
+    const prevH = higherData[higherData.length - 2];
+
+    // Helpers
+    const getEMA = (data, p) => {
+        const k = 2 / (p + 1);
+        let ema = data[0].close;
+        data.forEach(q => ema = (q.close - ema) * k + ema);
+        return ema;
+    };
+    const getRSI = (data) => {
+        const slice = data.slice(-15);
+        let gains = 0, losses = 0;
+        for (let i = 1; i < slice.length; i++) {
+            const d = slice[i].close - slice[i - 1].close;
+            if (d >= 0) gains += d; else losses -= d;
+        }
+        return 100 - (100 / (1 + (gains / (losses || 1))));
+    };
+
+    // Step 1: Tide Calculation (Higher Timeframe)
+    const ema5H = getEMA(higherData, 5);
+    const pEma5H = getEMA(higherData.slice(0, -1), 5);
+    const tideUp = ema5H > pEma5H;
+    const tideDown = ema5H < pEma5H;
+
+    // Step 2: Wave Calculation (Current Timeframe)
+    const rsi = getRSI(currentData);
+    const pRsi = getRSI(currentData.slice(0, -1));
+    const waveUp = rsi > pRsi && rsi > 40;
+    const waveDown = rsi < pRsi && rsi < 60;
+
+    const findings = [];
+    const avgVol = currentData.slice(-20).reduce((s, q) => s + q.volume, 0) / 20;
+
+    // BULL HAT (Tide Up & Wave Up)
+    if (tideUp && waveUp) {
+        let bullSignals = 0;
+        const checklist = [];
+
+        // 1. Candlestick
+        const isBullishGreen = last.close > last.open;
+        if (isBullishGreen) bullSignals++;
+
+        // 2. Volume
+        const heavyVol = last.volume > avgVol * 1.3;
+        if (heavyVol) bullSignals++;
+
+        // 3. EMA Crossover (5 EMA PCO with 26)
+        const e5 = getEMA(currentData, 5), e26 = getEMA(currentData, 26);
+        const pe5 = getEMA(currentData.slice(0, -1), 5), pe26 = getEMA(currentData.slice(0, -1), 26);
+        const pco = e5 > e26 && pe5 <= pe26;
+        if (pco) bullSignals++;
+
+        if (isBullishGreen || heavyVol || pco) {
+            findings.push({
+                type: 'SMM_BULL_HAT',
+                message: 'Wear a Bull Hat: Tide/Wave Alignment confirmed with Candlestick/Volume support',
+                checklist: [
+                    { label: `Tide (${higherInterval}): Uptick`, status: true },
+                    { label: `Wave (${currentInterval}): RSI Uptick`, status: true },
+                    { label: "Candle: Bullish Green", status: isBullishGreen },
+                    { label: "Volume: ABOVE Average", status: heavyVol },
+                    { label: "EMA: 5/26 Positive Crossover", status: pco }
+                ],
+                stop_loss: Math.min(last.low, prev.low),
+                target: last.close * 1.05,
+                score: bullSignals + 2
+            });
+        }
+    }
+
+    // BEAR HAT (Tide Down & Wave Down)
+    if (tideDown && waveDown) {
+        let bearSignals = 0;
+        const isBearishRed = last.close < last.open;
+        if (isBearishRed) bearSignals++;
+
+        const heavyVol = last.volume > avgVol * 1.3;
+        if (heavyVol) bearSignals++;
+
+        const nco = getEMA(currentData, 5) < getEMA(currentData, 26) && getEMA(currentData.slice(0, -1), 5) >= getEMA(currentData.slice(0, -1), 26);
+        if (nco) bearSignals++;
+
+        if (isBearishRed || heavyVol || nco) {
+            findings.push({
+                type: 'SMM_BEAR_HAT',
+                message: 'Wear a Bear Hat: Tide/Wave Alignment confirmed with Candlestick/Volume support',
+                checklist: [
+                    { label: `Tide (${higherInterval}): Downtick`, status: true },
+                    { label: `Wave (${currentInterval}): RSI Downtick`, status: true },
+                    { label: "Candle: Bearish Red", status: isBearishRed },
+                    { label: "Volume: ABOVE Average", status: heavyVol },
+                    { label: "EMA: 5/26 Negative Crossover", status: nco }
+                ],
+                stop_loss: Math.max(last.high, prev.high),
+                target: last.close * 0.95,
+                score: bearSignals + 2
+            });
+        }
+    }
+
+    return findings.map(f => ({
+        ...f,
+        symbol: symbol.replace('.NS', ''),
+        price: last.close,
+        volume: last.volume,
+        avg_volume: avgVol,
+        date: last.date.toISOString().split('T')[0]
+    }));
+};
+
+app.get('/api/smm-scanner', async (req, res) => {
+    const timeframe = req.query.timeframe || '1d';
+    const results = [];
+    // Only scan first 50 for speed in SMM due to double-screen fetching
+    const limitedStocks = NIFTY_STOCKS.slice(0, 50);
+
+    await Promise.all(limitedStocks.map(async (symbol) => {
+        const patterns = await detectSMMSetup(symbol, timeframe);
+        patterns.forEach(p => results.push(p));
+    }));
+
+    res.json({ status: "success", data: results });
+});
+
+app.get('/api/triangle-breakout', async (req, res) => {
+    const timeframe = req.query.timeframe || '1d';
+    const results = [];
+    for (let i = 0; i < NIFTY_STOCKS.length; i += 10) {
+        const batch = NIFTY_STOCKS.slice(i, i + 10);
+        await Promise.all(batch.map(async (symbol) => {
+            const data = await fetchYahooData(symbol, timeframe);
+            if (data.length < 80) return;
+            const patterns = detectTriangleBreakout(data);
+            patterns.forEach(p => {
+                results.push({ ...p, symbol: symbol.replace('.NS', '') });
+            });
+        }));
+    }
+    res.json({ status: "success", data: results });
+});
 
 const PORT = 8000;
-app.listen(PORT, () => console.log(`Backend Scanner API up on http://localhost:${PORT}`));
+app.listen(PORT, () => console.log(`Backend PAPA Scanner Live on http://localhost:${PORT}`));

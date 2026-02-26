@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { RefreshCw, TrendingUp, Activity, BarChart2, Filter, Clock } from 'lucide-react';
+import { RefreshCw, TrendingUp, Activity, BarChart2, Filter, Clock, Shield, Target, AlertCircle } from 'lucide-react';
 
 export default function Scanner() {
     const [breakouts, setBreakouts] = useState([]);
@@ -8,6 +8,25 @@ export default function Scanner() {
     const [error, setError] = useState(null);
     const [timeframe, setTimeframe] = useState('1d');
     const [category, setCategory] = useState('ALL');
+
+    const PAPA_CATEGORIES = [
+        { id: 'ALL', name: 'All PAPA Patterns' },
+        { id: 'DOUBLE_TOP', name: '1. Double Top' },
+        { id: 'DOUBLE_BOTTOM', name: '2. Double Bottom' },
+        { id: 'THREE_WHITE_SOLDIERS', name: '3. Three White Soldiers' },
+        { id: 'THREE_BLACK_CROWS', name: '4. Three Black Crows' },
+        { id: 'BULLS_COUNTER_ATTACK', name: '5. Bulls Counter Attack' },
+        { id: 'BEARS_COUNTER_ATTACK', name: '6. Bears Counter Attack' },
+        { id: 'SANDWICH_PATTERN', name: '7. Sandwich Pattern' },
+        { id: 'ROUNDING_BOTTOM', name: '8. Rounding Bottom' },
+        { id: 'ROUNDING_TOP', name: '9. Rounding Top' },
+        { id: 'GENUINE_BO', name: '10. Genuine BO' },
+        { id: 'GENUINE_BD', name: '11. Genuine BD' },
+        { id: 'FAKE_BO', name: '12. Fake BO' },
+        { id: 'FAKE_BD', name: '13. Fake BD' },
+        { id: 'GAP_UP', name: '14. Gap Up' },
+        { id: 'GAP_DOWN', name: '15. Gap Down' }
+    ];
 
     const fetchBreakouts = async () => {
         setLoading(true);
@@ -19,7 +38,7 @@ export default function Scanner() {
             }
         } catch (err) {
             console.error(err);
-            setError('Failed to fetch breakout data. Ensure backend is running.');
+            setError('Failed to fetch PAPA patterns. Ensure backend is running.');
         } finally {
             setLoading(false);
         }
@@ -30,72 +49,58 @@ export default function Scanner() {
     }, [timeframe, category]);
 
     const getBadgeColor = (type) => {
-        switch (type) {
-            case 'FLAT_BREAKOUT': return 'bg-orange-100 text-orange-700 border-orange-200';
-            case 'FLAT_BREAKDOWN': return 'bg-red-100 text-red-700 border-red-200';
-            case 'DOUBLE_TOP_BREAKOUT': return 'bg-purple-100 text-purple-700 border-purple-200';
-            case 'DOUBLE_BOTTOM_BREAKDOWN': return 'bg-rose-100 text-rose-700 border-rose-200';
-            case 'FLAG_POLE_BREAKOUT': return 'bg-blue-100 text-blue-700 border-blue-200';
-            case 'FLAG_POLE_BREAKDOWN': return 'bg-red-50 text-red-600 border-red-100';
-            case 'FAKE_BREAKOUT_DOWN': return 'bg-red-200 text-red-800 border-red-300';
-            case 'BULLISH_REVERSAL': return 'bg-teal-100 text-teal-700 border-teal-200';
-            case 'BEARISH_REVERSAL': return 'bg-rose-100 text-rose-700 border-rose-200';
-            default: return 'bg-gray-100 text-gray-700 border-gray-200';
+        if (type.includes('BULL') || type.includes('BOTTOM') || type.includes('WHITE') || type.includes('BO') || type.includes('GAP_UP')) {
+            return 'bg-emerald-100 text-emerald-700 border-emerald-200';
         }
+        return 'bg-rose-100 text-rose-700 border-rose-200';
     };
 
     const getTypeName = (type) => {
-        return type.replace(/_/g, ' ');
+        const cat = PAPA_CATEGORIES.find(c => c.id === type);
+        return cat ? cat.name : type.replace(/_/g, ' ');
     };
 
     return (
-        <div className="p-6 max-w-7xl mx-auto text-gray-900 font-sans">
-            <header className="mb-8 flex flex-col md:flex-row justify-between md:items-end gap-6 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-                <div className="flex items-center gap-4">
-                    <div className="bg-gradient-to-br from-indigo-500 to-purple-600 p-3 rounded-xl shadow-inner shadow-indigo-300">
-                        <TrendingUp className="text-white w-8 h-8" />
+        <div className="p-6 max-w-7xl mx-auto text-gray-900 font-sans min-h-screen bg-gray-50/50">
+            <header className="mb-8 flex flex-col md:flex-row justify-between md:items-end gap-6 bg-white p-8 rounded-3xl shadow-sm border border-gray-100">
+                <div className="flex items-center gap-5">
+                    <div className="bg-gradient-to-br from-indigo-600 to-violet-700 p-4 rounded-2xl shadow-lg shadow-indigo-100">
+                        <Shield className="text-white w-9 h-9" />
                     </div>
                     <div>
-                        <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">
-                            Breakout Scanner Pro
+                        <h1 className="text-3xl font-black text-gray-900 tracking-tight flex items-center gap-3">
+                            PAPA Decision Scanner
+                            <span className="bg-amber-100 text-amber-700 text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest border border-amber-200">Pro AI</span>
                         </h1>
-                        <p className="text-gray-500 font-medium mt-1">Nifty Top 100 Multipattern AI Detector</p>
+                        <p className="text-gray-500 font-medium mt-1">Deep Pattern Analysis based on PAPA Decision Sheets</p>
                     </div>
                 </div>
 
                 <div className="flex flex-wrap items-center gap-4">
-                    <div className="flex bg-gray-50 p-1 rounded-xl border border-gray-200">
-                        <div className="flex items-center px-4 py-2 border-r border-gray-200">
-                            <Clock className="w-4 h-4 text-gray-400 mr-2" />
+                    <div className="flex bg-gray-100/80 p-1.5 rounded-2xl border border-gray-200 backdrop-blur-sm">
+                        <div className="flex items-center px-4 py-2 border-r border-gray-300">
+                            <Clock className="w-4 h-4 text-gray-500 mr-2" />
                             <select
                                 value={timeframe}
                                 onChange={(e) => setTimeframe(e.target.value)}
-                                className="bg-transparent font-medium text-sm text-gray-700 outline-none cursor-pointer"
+                                className="bg-transparent font-bold text-sm text-gray-800 outline-none cursor-pointer"
                             >
-                                <option value="15m">15 Minute</option>
                                 <option value="1h">1 Hour</option>
-                                <option value="1d">Daily (1D)</option>
-                                <option value="1wk">Weekly (1W)</option>
-                                <option value="1mo">Monthly (1M)</option>
+                                <option value="1d">Daily</option>
+                                <option value="1wk">Weekly</option>
+                                <option value="1mo">Monthly</option>
                             </select>
                         </div>
                         <div className="flex items-center px-4 py-2">
-                            <Filter className="w-4 h-4 text-gray-400 mr-2" />
+                            <Filter className="w-4 h-4 text-gray-500 mr-2" />
                             <select
                                 value={category}
                                 onChange={(e) => setCategory(e.target.value)}
-                                className="bg-transparent font-medium text-sm text-gray-700 outline-none cursor-pointer"
+                                className="bg-transparent font-bold text-sm text-gray-800 outline-none cursor-pointer max-w-[200px]"
                             >
-                                <option value="ALL">All Breakouts & Breakdowns</option>
-                                <option value="FLAT_BREAKOUT">Flat Range Breakout</option>
-                                <option value="FLAT_BREAKDOWN">Flat Range Breakdown</option>
-                                <option value="DOUBLE_TOP_BREAKOUT">Double Top Breakout</option>
-                                <option value="DOUBLE_BOTTOM_BREAKDOWN">Double Bottom Breakdown</option>
-                                <option value="FLAG_POLE_BREAKOUT">Flag & Pole Breakout</option>
-                                <option value="FLAG_POLE_BREAKDOWN">Flag & Pole Breakdown</option>
-                                <option value="FAKE_BREAKOUT_DOWN">Fakeout (Bearish Trap)</option>
-                                <option value="BULLISH_REVERSAL">Bullish Reversal (Equal Lows)</option>
-                                <option value="BEARISH_REVERSAL">Bearish Reversal (Equal Highs)</option>
+                                {PAPA_CATEGORIES.map(cat => (
+                                    <option key={cat.id} value={cat.id}>{cat.name}</option>
+                                ))}
                             </select>
                         </div>
                     </div>
@@ -103,83 +108,99 @@ export default function Scanner() {
                     <button
                         onClick={fetchBreakouts}
                         disabled={loading}
-                        className="flex items-center justify-center gap-2 bg-gradient-to-r from-gray-900 to-gray-800 hover:from-black hover:to-gray-900 text-white px-6 py-3 rounded-xl transition-all shadow-md shadow-gray-200 disabled:opacity-50 font-semibold"
+                        className="flex items-center justify-center gap-2 bg-gray-900 hover:bg-black text-white px-8 py-3.5 rounded-2xl transition-all shadow-xl shadow-gray-200 disabled:opacity-50 font-black"
                     >
                         <RefreshCw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
-                        {loading ? 'Scanning...' : 'Scan Now'}
+                        {loading ? 'Analyzing...' : 'Deep Scan'}
                     </button>
                 </div>
             </header>
 
             {error && (
-                <div className="bg-red-50 text-red-600 p-4 rounded-xl mb-6 border border-red-100 font-medium tracking-wide">
+                <div className="bg-rose-50 text-rose-600 p-5 rounded-2xl mb-8 border border-rose-100 font-bold flex items-center gap-3">
+                    <AlertCircle className="w-5 h-5" />
                     {error}
                 </div>
             )}
 
             {loading ? (
-                <div className="flex flex-col items-center justify-center py-32 text-gray-500">
-                    <Activity className="w-16 h-16 mb-6 animate-[bounce_1s_infinite] text-indigo-500" />
-                    <p className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600">Analyzing Top Indian Stocks...</p>
-                    <p className="text-sm mt-2 text-gray-400 font-medium">Downloading {timeframe} OHLC history and calculating pattern geometries</p>
+                <div className="flex flex-col items-center justify-center py-40 text-gray-500">
+                    <div className="relative">
+                        <Activity className="w-20 h-20 mb-8 animate-pulse text-indigo-600" />
+                        <div className="absolute inset-0 bg-indigo-500 blur-3xl opacity-20 animate-pulse"></div>
+                    </div>
+                    <p className="text-2xl font-black bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-violet-600">Deep Scanning Market Geometry...</p>
+                    <p className="text-sm mt-3 text-gray-400 font-bold uppercase tracking-widest tracking-widest">Searching {timeframe} patterns on Nifty Top Stocks</p>
                 </div>
             ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                     {breakouts.length > 0 ? (
                         breakouts.map((stock, idx) => (
-                            <div key={idx} className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-xl hover:-translate-y-1 hover:border-indigo-100 transition-all group relative overflow-hidden">
-                                <div className={`absolute top-0 right-0 w-16 h-16 -mr-8 -mt-8 rounded-full ${(stock.type.includes('DOWN') || stock.type.includes('BEARISH')) ? 'bg-red-50' : 'bg-green-50'} opacity-50`}></div>
+                            <div key={idx} className="bg-white rounded-[2.5rem] shadow-sm border border-gray-100 p-8 hover:shadow-2xl hover:-translate-y-2 transition-all duration-500 group relative overflow-hidden">
+                                {/* Subtle Background Gradient */}
+                                <div className={`absolute -right-20 -top-20 w-64 h-64 rounded-full opacity-[0.03] group-hover:opacity-[0.08] transition-opacity duration-1000 ${stock.type.includes('BULL') || stock.type.includes('BO') ? 'bg-emerald-500' : 'bg-rose-500'}`}></div>
 
-                                <div className="flex justify-between items-start mb-5 relative z-10">
+                                <div className="flex justify-between items-start mb-6">
                                     <div>
-                                        <h2 className="text-2xl font-black text-gray-900 tracking-tight">{stock.symbol}</h2>
-                                        <span className={`text-[10px] font-bold px-2 py-1 rounded border mt-2 inline-block uppercase tracking-wider ${getBadgeColor(stock.type)}`}>
+                                        <div className="flex items-center gap-3">
+                                            <h2 className="text-3xl font-black text-gray-900 tracking-tighter">{stock.symbol}</h2>
+                                            <span className="bg-gray-100 text-gray-500 text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-tighter border border-gray-200">NSE</span>
+                                        </div>
+                                        <div className={`mt-3 text-[11px] font-black px-3 py-1.5 rounded-xl border inline-block uppercase tracking-wider ${getBadgeColor(stock.type)} shadow-sm`}>
                                             {getTypeName(stock.type)}
-                                        </span>
+                                        </div>
                                     </div>
                                     <div className="text-right">
-                                        <p className={`text-2xl font-bold ${(stock.type.includes('DOWN') || stock.type.includes('BEARISH')) ? 'text-red-500' : 'text-green-500'}`}>₹{stock.close}</p>
-                                        <p className="text-[11px] font-medium text-gray-400 mt-1 uppercase tracking-wide">{stock.date}</p>
+                                        <p className="text-3xl font-black text-gray-900 tracking-tighter">₹{stock.close}</p>
+                                        <p className="text-[10px] font-black text-indigo-500 mt-2 uppercase tracking-widest">{stock.date}</p>
                                     </div>
                                 </div>
 
-                                <div className="space-y-3 relative z-10">
-                                    <div className="flex justify-between items-center text-sm border-b border-gray-50 pb-2">
-                                        <span className="text-gray-500 font-medium">Key Level / Res</span>
-                                        <span className="font-bold text-gray-800">₹{stock.resistance}</span>
-                                    </div>
-                                    <div className="flex justify-between items-center text-sm border-b border-gray-50 pb-2">
-                                        <span className="text-gray-500 font-medium flex items-center gap-1">
-                                            <BarChart2 className="w-4 h-4" /> Vol Spike
-                                        </span>
-                                        <span className="font-bold text-gray-700 bg-gray-50 px-2 py-1 rounded text-xs border border-gray-100">
-                                            {(stock.volume / stock.avg_volume).toFixed(1)}x Avg
-                                        </span>
+                                <div className="space-y-4 mb-8">
+                                    <div className="bg-gray-50/50 p-5 rounded-2xl border border-gray-100 group-hover:border-indigo-100/50 transition-colors">
+                                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 flex items-center gap-2">
+                                            <Shield className="w-3 h-3" /> PAPA Observation
+                                        </p>
+                                        <p className="text-[13px] font-bold text-gray-700 leading-relaxed italic">
+                                            "{stock.message}"
+                                        </p>
                                     </div>
 
-                                    {stock.range_pct && (
-                                        <div className="flex justify-between items-center text-[13px] pt-1">
-                                            <span className="text-gray-500 font-medium">Compression</span>
-                                            <span className="font-semibold text-gray-600">{stock.range_pct}%</span>
-                                        </div>
-                                    )}
-
-                                    {stock.message && (
-                                        <div className="mt-4 pt-3 border-t border-gray-50">
-                                            <p className="text-[11px] font-bold text-indigo-500 uppercase tracking-widest mb-1">AI Indicator</p>
-                                            <p className="text-xs font-semibold text-gray-700 leading-relaxed bg-indigo-50/50 p-2 rounded-lg border border-indigo-100/50 italic">
-                                                "{stock.message}"
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="bg-rose-50/40 p-3 rounded-xl border border-rose-100/50">
+                                            <p className="text-[9px] font-black text-rose-400 uppercase tracking-widest mb-1 flex items-center gap-1">
+                                                <Target className="w-3 h-3" /> Stop Loss
                                             </p>
+                                            <p className="text-sm font-black text-rose-700">₹{parseFloat(stock.stop_loss).toFixed(1)}</p>
                                         </div>
-                                    )}
+                                        <div className="bg-emerald-50/40 p-3 rounded-xl border border-emerald-100/50">
+                                            <p className="text-[9px] font-black text-emerald-400 uppercase tracking-widest mb-1 flex items-center gap-1">
+                                                <TrendingUp className="w-3 h-3" /> Target
+                                            </p>
+                                            <p className="text-sm font-black text-emerald-700">₹{parseFloat(stock.target).toFixed(1)}</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="flex justify-between items-center text-[10px] font-black text-gray-400 uppercase tracking-widest pt-2 border-t border-gray-50">
+                                    <div className="flex items-center gap-2">
+                                        <BarChart2 className="w-3 h-3" />
+                                        <span>Vol: {(stock.volume / stock.avg_volume).toFixed(1)}x</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <Activity className="w-3 h-3" />
+                                        <span>R: ₹{stock.resistance}</span>
+                                    </div>
                                 </div>
                             </div>
                         ))
                     ) : (
-                        <div className="col-span-full bg-white p-12 rounded-3xl border border-gray-100 text-center shadow-sm">
-                            <Filter className="w-16 h-16 mx-auto text-gray-300 mb-4" />
-                            <h3 className="text-xl font-bold text-gray-600 mb-2 mt-4">No Patterns Found</h3>
-                            <p className="text-gray-500 font-medium max-w-md mx-auto">No Top 100 stocks match the <b>{getTypeName(category)}</b> criteria on the <b>{timeframe}</b> timeframe right now.</p>
+                        <div className="col-span-full bg-white p-24 rounded-[3rem] border border-gray-100 text-center shadow-xl shadow-gray-100/50 flex flex-col items-center">
+                            <div className="bg-gray-50 p-6 rounded-3xl mb-6">
+                                <Filter className="w-16 h-16 text-gray-200" />
+                            </div>
+                            <h3 className="text-3xl font-black text-gray-900 mb-3 tracking-tighter uppercase">No Active {category === 'ALL' ? 'Patterns' : getTypeName(category)}</h3>
+                            <p className="text-gray-500 font-bold max-w-sm mx-auto leading-relaxed">The AI has analyzed 80+ stocks but can't find clear geometric patterns for this setup on the {timeframe} timeframe right now.</p>
                         </div>
                     )}
                 </div>

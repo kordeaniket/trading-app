@@ -1,11 +1,15 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
-import { TrendingUp, LayoutDashboard, Settings, Layers, Briefcase, Zap } from 'lucide-react';
+import { TrendingUp, LayoutDashboard, Settings, Layers, Briefcase, Zap, Activity, Triangle, Shield } from 'lucide-react';
 import Dashboard from './pages/Dashboard';
 import Scanner from './pages/Scanner';
 import HeikinAshi from './pages/HeikinAshi';
 import BullishScanner from './pages/BullishScanner';
 import BearishScanner from './pages/BearishScanner';
+import ThirdWaveScanner from './pages/ThirdWaveScanner';
+import EndingDiagonalScanner from './pages/EndingDiagonalScanner';
+import TriangleScanner from './pages/TriangleScanner';
+import SMMScanner from './pages/SMMScanner';
 
 const Sidebar = () => {
     const location = useLocation();
@@ -42,6 +46,18 @@ const Sidebar = () => {
                     <Link to="/heikin-ashi" className={getLinkClass('/heikin-ashi')}>
                         <TrendingUp className="w-5 h-5 text-green-500" /> HA TREND RIDE
                     </Link>
+                    <Link to="/third-wave" className={getLinkClass('/third-wave')}>
+                        <Activity className="w-5 h-5 text-indigo-500" /> 3rd WAVE STRATEGY
+                    </Link>
+                    <Link to="/ending-diagonal" className={getLinkClass('/ending-diagonal')}>
+                        <Triangle className="w-5 h-5 text-rose-500 rotate-180" /> ENDING DIAGONAL
+                    </Link>
+                    <Link to="/triangle" className={getLinkClass('/triangle')}>
+                        <TrendingUp className="w-5 h-5 text-blue-500" /> TRIANGLE BREAKOUT
+                    </Link>
+                    <Link to="/smm" className={getLinkClass('/smm')}>
+                        <Shield className="w-5 h-5 text-indigo-500" /> SMM DECISION SHEET
+                    </Link>
                     <button className={getLinkClass('/portfolio')}>
                         <Briefcase className="w-5 h-5" /> PORTFOLIO
                         <span className="ml-auto bg-gray-100 text-[10px] uppercase font-bold px-2 py-0.5 rounded text-gray-400">Soon</span>
@@ -70,6 +86,10 @@ function App() {
                         <Route path="/bullish" element={<BullishScanner />} />
                         <Route path="/bearish" element={<BearishScanner />} />
                         <Route path="/heikin-ashi" element={<HeikinAshi />} />
+                        <Route path="/third-wave" element={<ThirdWaveScanner />} />
+                        <Route path="/ending-diagonal" element={<EndingDiagonalScanner />} />
+                        <Route path="/triangle" element={<TriangleScanner />} />
+                        <Route path="/smm" element={<SMMScanner />} />
                     </Routes>
                 </div>
             </div>
