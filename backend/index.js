@@ -4,6 +4,8 @@ import cors from 'cors';
 const app = express();
 app.use(cors());
 
+app.get('/api/health', (req, res) => res.json({ status: 'live', stocks: NIFTY_STOCKS.length }));
+
 const NIFTY_STOCKS = [
     "TATASTEEL.NS", "JSWSTEEL.NS", "JINDALSTEL.NS", "SAIL.NS", "RELIANCE.NS", "TCS.NS", "HDFCBANK.NS", "ICICIBANK.NS", "INFY.NS", "SBIN.NS",
     "BHARTIARTL.NS", "ITC.NS", "HINDUNILVR.NS", "LT.NS", "BAJFINANCE.NS", "KOTAKBANK.NS", "HCLTECH.NS", "ASIANPAINT.NS", "AXISBANK.NS", "MARUTI.NS",
@@ -313,11 +315,13 @@ const fetchYahooData = async (symbol, interval) => {
 // API Endpoints
 app.get('/api/scan', async (req, res) => {
     const timeframe = req.query.timeframe || '1d';
-    const category = req.query.category || 'ALL';
+    const limit = parseInt(req.query.limit) || 30;
+    const Category = req.query.category || 'ALL';
     const results = [];
+    const stocksToScan = NIFTY_STOCKS.slice(0, limit);
 
-    for (let i = 0; i < NIFTY_STOCKS.length; i += 10) {
-        const batch = NIFTY_STOCKS.slice(i, i + 10);
+    for (let i = 0; i < stocksToScan.length; i += 15) {
+        const batch = stocksToScan.slice(i, i + 15);
         await Promise.all(batch.map(async (symbol) => {
             const data = await fetchYahooData(symbol, timeframe);
             if (symbol.includes('STEEL') || symbol.includes('SAIL')) {
@@ -326,7 +330,7 @@ app.get('/api/scan', async (req, res) => {
             if (data.length < 50) return;
             const patterns = detectPAPAPatterns(data);
             patterns.forEach(p => {
-                if (category === 'ALL' || p.type === category) {
+                if (Category === 'ALL' || p.type === Category) {
                     results.push({ ...p, symbol: symbol.replace('.NS', '') });
                 }
             });
@@ -335,11 +339,51 @@ app.get('/api/scan', async (req, res) => {
     res.json({ status: "success", data: results });
 });
 
+// 🕯️ HEIKIN ASHI TREND ENGINE
+const detectHA = (quotes) => {
+    const ha = [];
+    for (let i = 1; i < quotes.length; i++) {
+        const h_c = (quotes[i].open + quotes[i].high + quotes[i].low + quotes[i].close) / 4;
+        const o_c = ha.length ? (ha[ha.length - 1].open + ha[ha.length - 1].close) / 2 : (quotes[i - 1].open + quotes[i - 1].close) / 2;
+        ha.push({ ...quotes[i], open: o_c, close: h_c, high: Math.max(quotes[i].high, o_c, h_c), low: Math.min(quotes[i].low, o_c, h_c) });
+    }
+
+    const last = ha[ha.length - 1], prev = ha[ha.length - 2];
+    if (!last || !prev) return [];
+    const isBull = last.close > last.open && last.low === last.low; // Simplified for robustness
+    const isBear = last.close < last.open && last.high === last.high;
+
+    if (isBull && last.close > prev.close) return [{ type: 'HA_BULL', trend: 'BULLISH', message: 'Strong HA Bullish Continuity', score: 5 }];
+    if (isBear && last.close < prev.close) return [{ type: 'HA_BEAR', trend: 'BEARISH', message: 'Strong HA Bearish Continuity', score: 5 }];
+    return [];
+};
+
+app.get('/api/scan-ha', async (req, res) => {
+    const timeframe = req.query.timeframe || '1d';
+    const limit = parseInt(req.query.limit) || 30;
+    const results = [];
+    const stocksToScan = NIFTY_STOCKS.slice(0, limit);
+
+    for (let i = 0; i < stocksToScan.length; i += 15) {
+        const batch = stocksToScan.slice(i, i + 15);
+        await Promise.all(batch.map(async (symbol) => {
+            const data = await fetchYahooData(symbol, timeframe);
+            if (data.length < 50) return;
+            const patterns = detectHA(data);
+            patterns.forEach(p => results.push({ ...p, symbol: symbol.replace('.NS', ''), price: data[data.length - 1].close }));
+        }));
+    }
+    res.json({ status: "success", data: results });
+});
+
 app.get('/api/bullish-setups', async (req, res) => {
     const timeframe = req.query.timeframe || '1d';
+    const limit = parseInt(req.query.limit) || 40;
     const results = [];
-    for (let i = 0; i < NIFTY_STOCKS.length; i += 10) {
-        const batch = NIFTY_STOCKS.slice(i, i + 10);
+    const stocksToScan = NIFTY_STOCKS.slice(0, limit);
+
+    for (let i = 0; i < stocksToScan.length; i += 20) {
+        const batch = stocksToScan.slice(i, i + 20);
         await Promise.all(batch.map(async (symbol) => {
             const data = await fetchYahooData(symbol, timeframe);
             if (data.length < 50) return;
@@ -357,9 +401,12 @@ app.get('/api/bullish-setups', async (req, res) => {
 
 app.get('/api/bearish-setups', async (req, res) => {
     const timeframe = req.query.timeframe || '1d';
+    const limit = parseInt(req.query.limit) || 40;
     const results = [];
-    for (let i = 0; i < NIFTY_STOCKS.length; i += 10) {
-        const batch = NIFTY_STOCKS.slice(i, i + 10);
+    const stocksToScan = NIFTY_STOCKS.slice(0, limit);
+
+    for (let i = 0; i < stocksToScan.length; i += 20) {
+        const batch = stocksToScan.slice(i, i + 20);
         await Promise.all(batch.map(async (symbol) => {
             const data = await fetchYahooData(symbol, timeframe);
             if (data.length < 50) return;
@@ -377,9 +424,12 @@ app.get('/api/bearish-setups', async (req, res) => {
 
 app.get('/api/third-wave', async (req, res) => {
     const timeframe = req.query.timeframe || '1d';
+    const limit = parseInt(req.query.limit) || 40;
     const results = [];
-    for (let i = 0; i < NIFTY_STOCKS.length; i += 10) {
-        const batch = NIFTY_STOCKS.slice(i, i + 10);
+    const stocksToScan = NIFTY_STOCKS.slice(0, limit);
+
+    for (let i = 0; i < stocksToScan.length; i += 20) {
+        const batch = stocksToScan.slice(i, i + 20);
         await Promise.all(batch.map(async (symbol) => {
             const data = await fetchYahooData(symbol, timeframe);
             if (data.length < 50) return;
@@ -547,9 +597,12 @@ const detectEndingDiagonal = (quotes) => {
 
 app.get('/api/ending-diagonal', async (req, res) => {
     const timeframe = req.query.timeframe || '1d';
+    const limit = parseInt(req.query.limit) || 30;
     const results = [];
-    for (let i = 0; i < NIFTY_STOCKS.length; i += 10) {
-        const batch = NIFTY_STOCKS.slice(i, i + 10);
+    const stocksToScan = NIFTY_STOCKS.slice(0, limit);
+
+    for (let i = 0; i < stocksToScan.length; i += 15) {
+        const batch = stocksToScan.slice(i, i + 15);
         await Promise.all(batch.map(async (symbol) => {
             const data = await fetchYahooData(symbol, timeframe);
             if (data.length < 80) return;
@@ -735,10 +788,11 @@ const detectSMMSetup = async (symbol, currentInterval) => {
 app.get('/api/smm-scanner', async (req, res) => {
     const timeframe = req.query.timeframe || '1d';
     const results = [];
-    // Only scan first 50 for speed in SMM due to double-screen fetching
-    const limitedStocks = NIFTY_STOCKS.slice(0, 50);
+    const limit = parseInt(req.query.limit) || 20; // Default limit for speed
+    const stocksToScan = NIFTY_STOCKS.slice(0, limit);
+    console.log(`Starting SMM Scan for ${stocksToScan.length} stocks...`);
 
-    await Promise.all(limitedStocks.map(async (symbol) => {
+    await Promise.all(stocksToScan.map(async (symbol) => {
         const patterns = await detectSMMSetup(symbol, timeframe);
         patterns.forEach(p => results.push(p));
     }));
@@ -748,9 +802,12 @@ app.get('/api/smm-scanner', async (req, res) => {
 
 app.get('/api/triangle-breakout', async (req, res) => {
     const timeframe = req.query.timeframe || '1d';
-    const results = [];
-    for (let i = 0; i < NIFTY_STOCKS.length; i += 10) {
-        const batch = NIFTY_STOCKS.slice(i, i + 10);
+    const limit = parseInt(req.query.limit) || 30;
+    const stocksToScan = NIFTY_STOCKS.slice(0, limit);
+    console.log(`Starting Triangle Scan for ${stocksToScan.length} stocks...`);
+
+    for (let i = 0; i < stocksToScan.length; i += 15) {
+        const batch = stocksToScan.slice(i, i + 15);
         await Promise.all(batch.map(async (symbol) => {
             const data = await fetchYahooData(symbol, timeframe);
             if (data.length < 80) return;
