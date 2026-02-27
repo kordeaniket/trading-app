@@ -1132,139 +1132,106 @@ const detectSMMSetup = async (symbol, currentInterval) => {
     if (currentData.length < 50 || higherData.length < 50) return [];
 
     const last = currentData[currentData.length - 1];
+    const prev = currentData[currentData.length - 2];
 
-    // Calculate indicators for both timeframes
+    // Calculate indicators
     const currentEMA20 = calculateEMA(currentData, 20);
     const currentEMA50 = calculateEMA(currentData, 50);
     const currentRSI = calculateRSI(currentData);
     const currentMACD = calculateMACD(currentData);
     const currentATR = calculateATR(currentData);
 
-    const higherEMA20 = calculateEMA(higherData, 20);
-    const higherEMA50 = calculateEMA(higherData, 50);
-    const higherRSI = calculateRSI(higherData);
-    const higherMACD = calculateMACD(higherData);
+    const htfEMA20 = calculateEMA(higherData, 20);
+    const htfEMA50 = calculateEMA(higherData, 50);
+    const htfRSI = calculateRSI(higherData);
 
-    const lastCurrentRSI = currentRSI[currentRSI.length - 1] || 50;
-    const lastHigherRSI = higherRSI[higherRSI.length - 1] || 50;
-    const lastCurrentMACD = currentMACD.macd[currentMACD.macd.length - 1] || 0;
-    const lastCurrentSignal = currentMACD.signal[currentMACD.signal.length - 1] || 0;
-    const lastHigherMACD = higherMACD.macd[higherMACD.macd.length - 1] || 0;
-    const lastHigherSignal = higherMACD.signal[higherMACD.signal.length - 1] || 0;
+    const lastRSI = currentRSI[currentRSI.length - 1] || 50;
+    const lastHTFRSI = htfRSI[htfRSI.length - 1] || 50;
+    const lastMACD = currentMACD.macd[currentMACD.macd.length - 1] || 0;
+    const lastSignal = currentMACD.signal[currentMACD.signal.length - 1] || 0;
     const lastATR = currentATR[currentATR.length - 1] || (last.high - last.low) * 0.5;
 
     const avgVol = currentData.slice(-20).reduce((s, q) => s + q.volume, 0) / 20;
 
-    // Trend alignment
-    const currentTrendUp = last.close > currentEMA20[currentEMA20.length - 1] &&
-        currentEMA20[currentEMA20.length - 1] > currentEMA50[currentEMA50.length - 1];
+    // Tide (HTF) Trend
+    const htfTrendUp = higherData[higherData.length - 1].close > htfEMA20[htfEMA20.length - 1];
+    const htfTrendDown = higherData[higherData.length - 1].close < htfEMA20[htfEMA20.length - 1];
 
-    const currentTrendDown = last.close < currentEMA20[currentEMA20.length - 1] &&
-        currentEMA20[currentEMA20.length - 1] < currentEMA50[currentEMA50.length - 1];
-
-    const higherTrendUp = higherData[higherData.length - 1].close > higherEMA20[higherEMA20.length - 1] &&
-        higherEMA20[higherEMA20.length - 1] > higherEMA50[higherEMA50.length - 1];
-
-    const higherTrendDown = higherData[higherData.length - 1].close < higherEMA20[higherEMA20.length - 1] &&
-        higherEMA20[higherEMA20.length - 1] < higherEMA50[higherEMA50.length - 1];
+    // Wave (Current TF) Momentum
+    const waveBullish = last.close > currentEMA20[currentEMA20.length - 1] && lastRSI > 50;
+    const waveBearish = last.close < currentEMA20[currentEMA20.length - 1] && lastRSI < 50;
 
     const findings = [];
 
-    // STRONG BUY - Both timeframes bullish
-    if (currentTrendUp && higherTrendUp) {
-        const macdBullish = lastCurrentMACD > lastCurrentSignal;
-        const rsiMomentum = lastCurrentRSI > 50 && lastCurrentRSI < 70;
-        const volumeConfirmation = last.volume > avgVol * 1.2;
+    // 🏆 BULL HAT SETUP
+    if (htfTrendUp) {
+        const rsiValid = lastRSI > 45;
+        const emaValid = last.close > currentEMA50[currentEMA50.length - 1];
+        const macdCrossing = lastMACD > lastSignal;
+        const volConfirmation = last.volume > avgVol;
+        const priceAction = last.close > prev.high;
 
-        const strength = [macdBullish, rsiMomentum, volumeConfirmation].filter(Boolean).length;
+        const score = [rsiValid, emaValid, macdCrossing, volConfirmation, priceAction].filter(Boolean).length;
 
-        findings.push({
-            type: 'SMM_STRONG_BUY',
-            confidence: strength >= 3 ? 'VERY_HIGH' : strength >= 2 ? 'HIGH' : 'MEDIUM',
-            message: 'Strong Buy - Both timeframes bullish',
-            entry: last.close,
-            stop_loss: Math.min(last.low, currentEMA20[currentEMA20.length - 1]) - lastATR,
-            target: last.close + (last.close - currentEMA20[currentEMA20.length - 1]) * 3,
-            current_trend: 'BULLISH',
-            higher_trend: 'BULLISH',
-            rsi: lastCurrentRSI,
-            macd_histogram: lastCurrentMACD - lastCurrentSignal,
-            volume_ratio: last.volume / avgVol
-        });
-    }
-
-    // STRONG SELL - Both timeframes bearish
-    if (currentTrendDown && higherTrendDown) {
-        const macdBearish = lastCurrentMACD < lastCurrentSignal;
-        const rsiMomentum = lastCurrentRSI < 50 && lastCurrentRSI > 30;
-        const volumeConfirmation = last.volume > avgVol * 1.2;
-
-        const strength = [macdBearish, rsiMomentum, volumeConfirmation].filter(Boolean).length;
-
-        findings.push({
-            type: 'SMM_STRONG_SELL',
-            confidence: strength >= 3 ? 'VERY_HIGH' : strength >= 2 ? 'HIGH' : 'MEDIUM',
-            message: 'Strong Sell - Both timeframes bearish',
-            entry: last.close,
-            stop_loss: Math.max(last.high, currentEMA20[currentEMA20.length - 1]) + lastATR,
-            target: last.close - (currentEMA20[currentEMA20.length - 1] - last.close) * 3,
-            current_trend: 'BEARISH',
-            higher_trend: 'BEARISH',
-            rsi: lastCurrentRSI,
-            macd_histogram: lastCurrentMACD - lastCurrentSignal,
-            volume_ratio: last.volume / avgVol
-        });
-    }
-
-    // BULLISH ALIGNMENT - Higher timeframe bullish, current correcting
-    if (higherTrendUp && !currentTrendUp && last.close < currentEMA20[currentEMA20.length - 1]) {
-        const rsiOversold = lastCurrentRSI < 40;
-        const macdTurning = lastCurrentMACD > lastCurrentSignal &&
-            lastCurrentMACD - lastCurrentSignal < currentATR[currentATR.length - 1] * 0.1;
-
-        if (rsiOversold || macdTurning) {
+        if (score >= 3) {
             findings.push({
-                type: 'SMM_BULLISH_ALIGNMENT',
-                confidence: 'MEDIUM',
-                message: 'Bullish alignment - Higher timeframe up, current oversold',
-                entry: last.close,
-                stop_loss: last.low - lastATR,
-                target: currentEMA20[currentEMA20.length - 1] + lastATR * 2,
-                higher_trend: 'BULLISH',
-                current_phase: 'CORRECTION',
-                rsi: lastCurrentRSI
+                type: 'SMM_BULL_HAT',
+                confidence: score === 5 ? 'VERY_HIGH' : score >= 4 ? 'HIGH' : 'MEDIUM',
+                score: score,
+                message: 'Bull Hat Detected: Market tide is rising, wave alignment complete.',
+                checklist: [
+                    { label: "Market Tide (HTF) is Bullish", status: true },
+                    { label: "Wave Momentum (RSI > 45)", status: rsiValid },
+                    { label: "Price above Primary Support (EMA50)", status: emaValid },
+                    { label: "MACD Momentum Cross", status: macdCrossing },
+                    { label: "Volume Force Confirmation", status: volConfirmation }
+                ],
+                price: last.close,
+                stop_loss: Math.min(last.low, currentEMA50[currentEMA50.length - 1]) - lastATR,
+                target: last.close + (last.close - currentEMA50[currentEMA50.length - 1]) * 4,
+                volume: last.volume,
+                avg_volume: avgVol,
+                date: last.date.toISOString().split('T')[0]
             });
         }
     }
 
-    // BEARISH ALIGNMENT - Higher timeframe bearish, current rallying
-    if (higherTrendDown && !currentTrendDown && last.close > currentEMA20[currentEMA20.length - 1]) {
-        const rsiOverbought = lastCurrentRSI > 60;
-        const macdTurning = lastCurrentMACD < lastCurrentSignal &&
-            lastCurrentSignal - lastCurrentMACD < currentATR[currentATR.length - 1] * 0.1;
+    // 🏆 BEAR HAT SETUP
+    if (htfTrendDown) {
+        const rsiValid = lastRSI < 55;
+        const emaValid = last.close < currentEMA50[currentEMA50.length - 1];
+        const macdCrossing = lastMACD < lastSignal;
+        const volConfirmation = last.volume > avgVol;
+        const priceAction = last.close < prev.low;
 
-        if (rsiOverbought || macdTurning) {
+        const score = [rsiValid, emaValid, macdCrossing, volConfirmation, priceAction].filter(Boolean).length;
+
+        if (score >= 3) {
             findings.push({
-                type: 'SMM_BEARISH_ALIGNMENT',
-                confidence: 'MEDIUM',
-                message: 'Bearish alignment - Higher timeframe down, current overbought',
-                entry: last.close,
-                stop_loss: last.high + lastATR,
-                target: currentEMA20[currentEMA20.length - 1] - lastATR * 2,
-                higher_trend: 'BEARISH',
-                current_phase: 'PULLBACK',
-                rsi: lastCurrentRSI
+                type: 'SMM_BEAR_HAT',
+                confidence: score === 5 ? 'VERY_HIGH' : score >= 4 ? 'HIGH' : 'MEDIUM',
+                score: score,
+                message: 'Bear Hat Detected: Market tide is falling, wave breakdown confirmed.',
+                checklist: [
+                    { label: "Market Tide (HTF) is Bearish", status: true },
+                    { label: "Wave Weakness (RSI < 55)", status: rsiValid },
+                    { label: "Price below Primary Resistance (EMA50)", status: emaValid },
+                    { label: "MACD Bearish Cross", status: macdCrossing },
+                    { label: "Selling Volume Pressure", status: volConfirmation }
+                ],
+                price: last.close,
+                stop_loss: Math.max(last.high, currentEMA50[currentEMA50.length - 1]) + lastATR,
+                target: last.close - (currentEMA50[currentEMA50.length - 1] - last.close) * 4,
+                volume: last.volume,
+                avg_volume: avgVol,
+                date: last.date.toISOString().split('T')[0]
             });
         }
     }
 
     return findings.map(f => ({
         ...f,
-        symbol: symbol.replace('.NS', ''),
-        price: last.close,
-        volume: last.volume,
-        avg_volume: avgVol,
-        date: last.date.toISOString().split('T')[0]
+        symbol: symbol.replace('.NS', '')
     }));
 };
 
