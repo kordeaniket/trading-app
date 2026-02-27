@@ -145,7 +145,7 @@ export default function BullishScanner() {
                                             <Info className="w-4 h-4" /> 11-Point Verification
                                         </p>
                                         <div className="space-y-3">
-                                            {stock.checklist.map((item) => (
+                                            {stock.checklist?.map((item) => (
                                                 <div key={item.id} className="flex items-center gap-4">
                                                     <div className={`w-5 h-5 rounded-lg flex items-center justify-center text-[10px] shadow-sm ${item.status ? 'bg-emerald-500 text-white' : 'bg-gray-200 text-gray-400'}`}>
                                                         {item.status ? '✓' : '•'}

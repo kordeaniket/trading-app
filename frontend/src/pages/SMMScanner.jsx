@@ -120,7 +120,7 @@ export default function SMMScanner() {
                                     <div className="bg-gray-50 p-5 rounded-3xl border border-gray-100">
                                         <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3">Decision Matrix</p>
                                         <div className="space-y-3">
-                                            {stock.checklist.map((item, i) => (
+                                            {stock.checklist?.map((item, i) => (
                                                 <div key={i} className="flex items-center justify-between">
                                                     <span className={`text-xs font-bold ${item.status ? 'text-gray-800' : 'text-gray-400 font-normal italic'}`}>{item.label}</span>
                                                     {item.status ? (

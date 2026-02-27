@@ -116,7 +116,7 @@ export default function EndingDiagonalScanner() {
                                             <Shield className="w-3 h-3" /> Reversal Checklist
                                         </p>
                                         <div className="space-y-2">
-                                            {stock.checklist.map((item, i) => (
+                                            {stock.checklist?.map((item, i) => (
                                                 <div key={i} className="flex items-center justify-between">
                                                     <span className={`text-[12px] font-bold ${item.status ? 'text-gray-700' : 'text-gray-400'}`}>{item.label}</span>
                                                     {item.status ? (
