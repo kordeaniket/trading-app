@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useLocation, Navigate } from 'react-router-dom';
-import { TrendingUp, LayoutDashboard, Settings, Layers, Briefcase, Zap, Activity, Triangle, Shield, Menu, X, ArrowRight, LogOut } from 'lucide-react';
+import { TrendingUp, LayoutDashboard, Settings, Layers, Briefcase, Zap, Activity, Triangle, Shield, Menu, X, ArrowRight, LogOut, BoxSelect } from 'lucide-react';
 import Scanner from './pages/Scanner';
 import HeikinAshi from './pages/HeikinAshi';
 import BullishScanner from './pages/BullishScanner';
@@ -10,12 +10,13 @@ import EndingDiagonalScanner from './pages/EndingDiagonalScanner';
 import TriangleScanner from './pages/TriangleScanner';
 import SMMScanner from './pages/SMMScanner';
 import Login from './pages/Login';
+import BoxScanner from './pages/BoxScanner';
 
 const Sidebar = ({ onLogout }) => {
     const location = useLocation();
 
     const getLinkClass = (path) => {
-        const isActive = location.pathname === path || (path === '/scanner' && location.pathname === '/');
+        const isActive = location.pathname === path || (path === '/box-scanner' && location.pathname === '/');
         return isActive
             ? "flex items-center gap-4 w-full bg-indigo-600 text-white font-black px-5 py-4 rounded-[1.25rem] transition-all shadow-lg shadow-indigo-100 scale-[1.02]"
             : "flex items-center gap-4 w-full text-gray-400 font-bold px-5 py-4 rounded-[1.25rem] hover:bg-gray-50 hover:text-gray-900 transition-all hover:translate-x-1";
@@ -36,6 +37,9 @@ const Sidebar = ({ onLogout }) => {
 
                 <nav className="space-y-2 font-sans">
                     <p className="text-[10px] font-black text-gray-300 uppercase tracking-[0.2em] mb-4 px-2">Market Intelligence</p>
+                    <Link to="/box-scanner" className={getLinkClass('/box-scanner')}>
+                        <BoxSelect className="w-5 h-5" /> <span className="text-[11px] tracking-widest uppercase">Box Sniper</span>
+                    </Link>
                     <Link to="/scanner" className={getLinkClass('/scanner')}>
                         <Layers className="w-5 h-5" /> <span className="text-[11px] tracking-widest uppercase">PAPA Scanner</span>
                     </Link>
@@ -88,14 +92,15 @@ const MobileNav = ({ onLogout }) => {
     const location = useLocation();
 
     const navItems = [
-        { path: '/scanner', icon: Layers, label: 'PAPA', color: 'text-indigo-500' },
+        { path: '/box-scanner', icon: BoxSelect, label: 'BOX', color: 'text-indigo-500' },
+        { path: '/scanner', icon: Layers, label: 'PAPA', color: 'text-blue-500' },
         { path: '/bullish', icon: Zap, label: 'BULL', color: 'text-emerald-500' },
-        { path: '/bearish', icon: Zap, label: 'BEAR', color: 'text-rose-500' },
         { path: '/smm', icon: Shield, label: 'DECISION', color: 'text-purple-500' },
     ];
 
     const allItems = [
-        { path: '/scanner', icon: Layers, label: 'PAPA Scanner', color: 'bg-indigo-50 text-indigo-600', desc: 'AI Geometric Patterns' },
+        { path: '/box-scanner', icon: BoxSelect, label: 'Box Sniper', color: 'bg-indigo-50 text-indigo-600', desc: 'Consolidation BO' },
+        { path: '/scanner', icon: Layers, label: 'PAPA Scanner', color: 'bg-blue-50 text-blue-600', desc: 'AI Geometric Patterns' },
         { path: '/bullish', icon: Zap, label: 'Bull Sniper', color: 'bg-emerald-50 text-emerald-600', desc: 'Long Reversal Radar' },
         { path: '/bearish', icon: Zap, label: 'Bear Sniper', color: 'bg-rose-50 text-rose-600', desc: 'Short Risk Detection' },
         { path: '/heikin-ashi', icon: TrendingUp, label: 'HA Trend Ride', color: 'bg-green-50 text-green-600', desc: 'Continuity Analytics' },
@@ -222,7 +227,8 @@ function App() {
                 <div className="flex-1 w-full pb-20 lg:pb-0 overflow-x-hidden min-w-0">
                     <main className="max-w-full">
                         <Routes>
-                            <Route path="/" element={<Scanner />} />
+                            <Route path="/" element={<BoxScanner />} />
+                            <Route path="/box-scanner" element={<BoxScanner />} />
                             <Route path="/scanner" element={<Scanner />} />
                             <Route path="/bullish" element={<BullishScanner />} />
                             <Route path="/bearish" element={<BearishScanner />} />

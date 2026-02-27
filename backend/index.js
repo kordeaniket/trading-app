@@ -552,6 +552,336 @@ const detectThirdWaveSetup = (quotes) => {
     return findings;
 };
 
+// 📦 ADVANCED BOX BREAKOUT/BREAKDOWN ENGINE (NSE PRO)
+// Corrected and accurate logic for Indian Stock Market
+
+const detectBoxBreakout = (quotes, symbol = '') => {
+    if (quotes.length < 50) return [];
+
+    const results = [];
+    const last = quotes[quotes.length - 1];
+
+    // ========== TECHNICAL INDICATORS ==========
+    const rsiArr = calculateRSI(quotes, 14);
+    const atrArr = calculateATR(quotes, 14);
+    const closePrices = quotes.map(q => q.close);
+    const volumes = quotes.map(q => q.volume);
+
+    const sma20Arr = calculateSMA(closePrices, 20);
+    const sma50Arr = calculateSMA(closePrices, 50);
+    const volumeSMA20Arr = calculateSMA(volumes, 20);
+
+    // FIX: Correctly extract scalar values from arrays
+    const lastRSI = rsiArr[rsiArr.length - 1] || 50;
+    const prevRSI = rsiArr[rsiArr.length - 2] || 50;   // was undefined before (bug)
+    const lastATR = atrArr[atrArr.length - 1] || (last.high - last.low) * 0.5;
+    const lastSMA20 = sma20Arr[sma20Arr.length - 1] || last.close;  // was entire array before (bug)
+    const lastSMA50 = sma50Arr[sma50Arr.length - 1] || last.close;  // was entire array before (bug)
+    const avgVol = volumeSMA20Arr[volumeSMA20Arr.length - 1] || last.volume;
+
+    // ========== BOX FORMATION: last 20-30 candles, exclude current ==========
+    const boxLookback = Math.min(30, Math.floor(quotes.length * 0.55));
+    const boxSlice = quotes.slice(-(boxLookback + 1), -1);
+
+    if (boxSlice.length < 10) return [];
+
+    // Percentile-based box boundaries (robust to outlier wicks)
+    const sortedHighs = boxSlice.map(q => q.high).sort((a, b) => a - b);
+    const sortedLows = boxSlice.map(q => q.low).sort((a, b) => a - b);
+
+    const resIndex = Math.floor(sortedHighs.length * 0.85);
+    const supIndex = Math.floor(sortedLows.length * 0.15);
+
+    const boxResistance = sortedHighs[resIndex];
+    const boxSupport = sortedLows[supIndex];
+
+    if (!boxResistance || !boxSupport || boxResistance <= boxSupport) return [];
+
+    const boxWidth = boxResistance - boxSupport;
+    const boxWidthPercent = (boxWidth / boxSupport) * 100;
+
+    // Valid box: 4-18% width (realistic for NSE daily/weekly)
+    if (boxWidthPercent < 4 || boxWidthPercent > 18) return [];
+
+    // ========== TOUCH DETECTION (2.5% zone — realistic for NSE volatility) ==========
+    const touchZone = 0.025;
+
+    const touchesResistance = boxSlice.filter(q =>
+        Math.abs(q.high - boxResistance) / boxResistance < touchZone ||
+        Math.abs(q.close - boxResistance) / boxResistance < touchZone
+    ).length;
+
+    const touchesSupport = boxSlice.filter(q =>
+        Math.abs(q.low - boxSupport) / boxSupport < touchZone ||
+        Math.abs(q.close - boxSupport) / boxSupport < touchZone
+    ).length;
+
+    // Minimum 2 touches on each side (3 was too strict)
+    if (touchesResistance < 2 || touchesSupport < 2) return [];
+
+    // ========== CONSOLIDATION CHECK: 65%+ candles inside the box ==========
+    const candlesInsideBox = boxSlice.filter(q =>
+        q.close >= boxSupport * 0.985 && q.close <= boxResistance * 1.015
+    ).length;
+    const insidePercent = candlesInsideBox / boxSlice.length;
+
+    if (insidePercent < 0.65) return [];
+
+    // ========== VOLUME CONTRACTION (healthy pre-breakout setup) ==========
+    const half = Math.floor(boxSlice.length / 2);
+    const firstHalfVol = boxSlice.slice(0, half).reduce((s, q) => s + q.volume, 0) / (half || 1);
+    const secondHalfVol = boxSlice.slice(half).reduce((s, q) => s + q.volume, 0) / ((boxSlice.length - half) || 1);
+    const volumeContracting = secondHalfVol <= firstHalfVol * 1.15;
+
+    // ========== BOX QUALITY SCORE (0-10) ==========
+    const touchScore = Math.min(4, Math.max(0, touchesResistance + touchesSupport - 3));
+    const widthScore = boxWidthPercent >= 5 && boxWidthPercent <= 12 ? 3 :
+        (boxWidthPercent >= 4 && boxWidthPercent <= 15 ? 2 : 1);
+    const consScore = insidePercent >= 0.82 ? 3 : (insidePercent >= 0.72 ? 2 : 1);
+    const boxQualityScore = Math.min(10, Math.round(touchScore + widthScore + consScore));
+
+    // ========== CURRENT CANDLE ANALYSIS ==========
+    const currentClose = last.close;
+    const currentHigh = last.high;
+    const currentLow = last.low;
+    const currentVolume = last.volume;
+    const volumeRatio = avgVol > 0 ? currentVolume / avgVol : 1;
+
+    const bodySize = Math.abs(last.close - last.open);
+    const candleRange = (last.high - last.low) || 1;
+    const bodyPercent = (bodySize / candleRange) * 100;
+    const isBullishCandle = last.close > last.open;
+    const isBearishCandle = last.close < last.open;
+
+    // RSI momentum (prevRSI now correctly defined)
+    const rsiRising = lastRSI > prevRSI;
+    const rsiFalling = lastRSI < prevRSI;
+
+    // ========== BULLISH BREAKOUT DETECTION ==========
+    // Close > resistance by 0.5%, AND high > resistance by 1%
+    const bullBreakout = currentClose > boxResistance * 1.005 && currentHigh > boxResistance * 1.01;
+
+    if (bullBreakout) {
+        let confidence = 65;
+
+        // Volume (primary signal; Yahoo doesn't provide delivery %)
+        if (volumeRatio >= 2.5) confidence += 18;
+        else if (volumeRatio >= 2.0) confidence += 13;
+        else if (volumeRatio >= 1.5) confidence += 8;
+        else if (volumeRatio >= 1.2) confidence += 4;
+
+        // RSI: bullish zone, not overbought
+        if (lastRSI > 55 && lastRSI < 78) confidence += 8;
+        else if (lastRSI >= 50 && lastRSI <= 55) confidence += 3;
+
+        // Strong bullish candle
+        if (bodyPercent > 65 && isBullishCandle) confidence += 7;
+        else if (bodyPercent > 40 && isBullishCandle) confidence += 3;
+
+        // Above SMAs
+        if (currentClose > lastSMA20 && currentClose > lastSMA50) confidence += 5;
+        else if (currentClose > lastSMA20) confidence += 2;
+
+        // RSI rising momentum
+        if (rsiRising) confidence += 3;
+
+        // Box quality bonus
+        if (boxQualityScore >= 7) confidence += 5;
+        else if (boxQualityScore >= 5) confidence += 2;
+
+        // Pre-breakout volume contraction = classic setup
+        if (volumeContracting) confidence += 4;
+
+        // More touches = stronger box
+        if (touchesResistance >= 3 && touchesSupport >= 3) confidence += 4;
+
+        confidence = Math.min(97, confidence);
+
+        if (confidence >= 70) {
+            results.push({
+                symbol,
+                type: 'BOX_BREAKOUT_BULLISH',
+                confidence,
+                score: boxQualityScore,
+                message: `${symbol}: Bullish Breakout above Rs.${boxResistance.toFixed(2)} | Box ${boxWidthPercent.toFixed(1)}% | Vol ${volumeRatio.toFixed(1)}x | RSI ${lastRSI.toFixed(0)}`,
+
+                box_details: {
+                    support: parseFloat(boxSupport.toFixed(2)),
+                    resistance: parseFloat(boxResistance.toFixed(2)),
+                    width_percent: parseFloat(boxWidthPercent.toFixed(2)),
+                    duration_candles: boxLookback,
+                    resistance_touches: touchesResistance,
+                    support_touches: touchesSupport,
+                    quality_score: boxQualityScore,
+                    inside_percent: parseFloat((insidePercent * 100).toFixed(1))
+                },
+
+                breakout_details: {
+                    price: parseFloat(currentClose.toFixed(2)),
+                    breakout_percent: (((currentClose - boxResistance) / boxResistance) * 100).toFixed(2) + '%',
+                    volume_ratio: parseFloat(volumeRatio.toFixed(2)),
+                    rsi: parseFloat(lastRSI.toFixed(1)),
+                    candle_body: parseFloat(bodyPercent.toFixed(0)) + '%',
+                    candle_type: isBullishCandle ? 'Bullish' : 'Doji'
+                },
+
+                trade_plan: {
+                    entry_zone: `Rs.${(boxResistance * 1.002).toFixed(2)} - Rs.${(boxResistance * 1.012).toFixed(2)}`,
+                    stop_loss: parseFloat((boxResistance - lastATR * 0.6).toFixed(2)),
+                    stop_loss_percent: ((lastATR * 0.6 / currentClose) * 100).toFixed(2) + '%',
+                    target_1: parseFloat((currentClose + boxWidth).toFixed(2)),
+                    target_2: parseFloat((currentClose + boxWidth * 1.618).toFixed(2)),
+                    target_3: parseFloat((currentClose + boxWidth * 2.5).toFixed(2)),
+                    risk_reward_1: parseFloat((boxWidth / (lastATR * 0.6)).toFixed(2)),
+                    expected_holding: boxWidthPercent < 8 ? '2-7 days' : '7-20 days'
+                },
+
+                market_context: {
+                    vs_sma20: ((currentClose / lastSMA20 - 1) * 100).toFixed(2) + '%',
+                    vs_sma50: ((currentClose / lastSMA50 - 1) * 100).toFixed(2) + '%',
+                    atr_percent: ((lastATR / currentClose) * 100).toFixed(2) + '%',
+                    volume_contracting_before: volumeContracting
+                }
+            });
+        }
+    }
+
+    // ========== BEARISH BREAKDOWN DETECTION ==========
+    // Close < support by 0.5%, AND low < support by 1%
+    const bearBreakdown = currentClose < boxSupport * 0.995 && currentLow < boxSupport * 0.99;
+
+    if (bearBreakdown) {
+        let confidence = 65;
+
+        if (volumeRatio >= 2.5) confidence += 18;
+        else if (volumeRatio >= 2.0) confidence += 13;
+        else if (volumeRatio >= 1.5) confidence += 8;
+        else if (volumeRatio >= 1.2) confidence += 4;
+
+        if (lastRSI < 45 && lastRSI > 20) confidence += 8;
+        else if (lastRSI >= 45 && lastRSI <= 50) confidence += 3;
+
+        if (bodyPercent > 65 && isBearishCandle) confidence += 7;
+        else if (bodyPercent > 40 && isBearishCandle) confidence += 3;
+
+        if (currentClose < lastSMA20 && currentClose < lastSMA50) confidence += 5;
+        else if (currentClose < lastSMA20) confidence += 2;
+
+        if (rsiFalling) confidence += 3;
+
+        if (boxQualityScore >= 7) confidence += 5;
+        else if (boxQualityScore >= 5) confidence += 2;
+
+        if (volumeContracting) confidence += 4;
+        if (touchesResistance >= 3 && touchesSupport >= 3) confidence += 4;
+
+        confidence = Math.min(97, confidence);
+
+        if (confidence >= 70) {
+            results.push({
+                symbol,
+                type: 'BOX_BREAKDOWN_BEARISH',
+                confidence,
+                score: boxQualityScore,
+                message: `${symbol}: Bearish Breakdown below Rs.${boxSupport.toFixed(2)} | Box ${boxWidthPercent.toFixed(1)}% | Vol ${volumeRatio.toFixed(1)}x | RSI ${lastRSI.toFixed(0)}`,
+
+                box_details: {
+                    support: parseFloat(boxSupport.toFixed(2)),
+                    resistance: parseFloat(boxResistance.toFixed(2)),
+                    width_percent: parseFloat(boxWidthPercent.toFixed(2)),
+                    duration_candles: boxLookback,
+                    resistance_touches: touchesResistance,
+                    support_touches: touchesSupport,
+                    quality_score: boxQualityScore,
+                    inside_percent: parseFloat((insidePercent * 100).toFixed(1))
+                },
+
+                breakdown_details: {
+                    price: parseFloat(currentClose.toFixed(2)),
+                    breakdown_percent: (((boxSupport - currentClose) / boxSupport) * 100).toFixed(2) + '%',
+                    volume_ratio: parseFloat(volumeRatio.toFixed(2)),
+                    rsi: parseFloat(lastRSI.toFixed(1)),
+                    candle_body: parseFloat(bodyPercent.toFixed(0)) + '%',
+                    candle_type: isBearishCandle ? 'Bearish' : 'Doji'
+                },
+
+                trade_plan: {
+                    entry_zone: `Rs.${(boxSupport * 0.998).toFixed(2)} - Rs.${(boxSupport * 0.988).toFixed(2)}`,
+                    stop_loss: parseFloat((boxSupport + lastATR * 0.6).toFixed(2)),
+                    stop_loss_percent: ((lastATR * 0.6 / currentClose) * 100).toFixed(2) + '%',
+                    target_1: parseFloat((currentClose - boxWidth).toFixed(2)),
+                    target_2: parseFloat((currentClose - boxWidth * 1.618).toFixed(2)),
+                    target_3: parseFloat((currentClose - boxWidth * 2.5).toFixed(2)),
+                    risk_reward_1: parseFloat((boxWidth / (lastATR * 0.6)).toFixed(2)),
+                    expected_holding: boxWidthPercent < 8 ? '2-7 days' : '7-20 days'
+                },
+
+                market_context: {
+                    vs_sma20: ((currentClose / lastSMA20 - 1) * 100).toFixed(2) + '%',
+                    vs_sma50: ((currentClose / lastSMA50 - 1) * 100).toFixed(2) + '%',
+                    atr_percent: ((lastATR / currentClose) * 100).toFixed(2) + '%',
+                    volume_contracting_before: volumeContracting
+                }
+            });
+        }
+    }
+
+    return results;
+};
+
+function calculateSMA(values, period) {
+    const sma = [];
+
+    for (let i = period - 1; i < values.length; i++) {
+        const sum = values.slice(i - period + 1, i + 1).reduce((a, b) => a + b, 0);
+        sma.push(sum / period);
+    }
+
+    // Pad beginning
+    while (sma.length < values.length) {
+        sma.unshift(sma[0] || values[0] || 0);
+    }
+
+    return sma;
+}
+
+function calculateConsolidationScore(boxSlice) {
+    if (boxSlice.length < 5) return 0;
+
+    // Calculate price movement consistency
+    const closes = boxSlice.map(q => q.close);
+    const changes = [];
+
+    for (let i = 1; i < closes.length; i++) {
+        changes.push(Math.abs(closes[i] - closes[i - 1]) / closes[i - 1]);
+    }
+
+    const avgChange = changes.reduce((a, b) => a + b, 0) / changes.length;
+    const changeStdDev = Math.sqrt(
+        changes.map(c => Math.pow(c - avgChange, 2)).reduce((a, b) => a + b, 0) / changes.length
+    );
+
+    // Low standard deviation means tight consolidation
+    if (changeStdDev < 0.005) return 2; // Very tight
+    if (changeStdDev < 0.01) return 1.5; // Moderate
+    if (changeStdDev < 0.015) return 1; // Loose but acceptable
+
+    return 0.5; // Very loose consolidation
+}
+
+// Optional: Add F&O specific detection
+function detectFOConfirmation(symbol, foData) {
+    // Implement if you have F&O data
+    // Check OI changes, PCR, etc.
+    return {
+        isFOStock: false,
+        oiChange: 0,
+        pcr: 0,
+        confirmation: 'neutral'
+    };
+}
+
+
 // 🕯️ HEIKIN ASHI TREND ENGINE (ENHANCED)
 const detectHA = (quotes) => {
     if (quotes.length < 30) return [];
@@ -1112,6 +1442,7 @@ const isBearish = (q) => q.close < q.open;
 const fetchYahooData = async (symbol, interval) => {
     try {
         let range = '1y';
+        if (interval === '5m') range = '5d';
         if (interval === '15m') range = '5d';
         if (interval === '1h') range = '1mo';
         if (interval === '1wk') range = '5y';
@@ -1335,6 +1666,32 @@ app.get('/api/ending-diagonal', async (req, res) => {
         timestamp: new Date().toISOString(),
         count: results.length,
         data: results
+    });
+});
+
+app.get('/api/scan-box', async (req, res) => {
+    const timeframe = req.query.timeframe || '1d';
+    const limit = parseInt(req.query.limit) || 50;
+    const results = [];
+    const stocksToScan = NIFTY_STOCKS.slice(0, limit);
+
+    for (let i = 0; i < stocksToScan.length; i += 10) {
+        const batch = stocksToScan.slice(i, i + 10);
+        await Promise.all(batch.map(async (symbol) => {
+            const data = await fetchYahooData(symbol, timeframe);
+            if (data.length < 50) return;
+            const patterns = detectBoxBreakout(data);
+            patterns.forEach(p => {
+                results.push({ ...p, symbol: symbol.replace('.NS', '') });
+            });
+        }));
+    }
+
+    res.json({
+        status: "success",
+        timestamp: new Date().toISOString(),
+        count: results.length,
+        data: results.sort((a, b) => b.confidence - a.confidence)
     });
 });
 
