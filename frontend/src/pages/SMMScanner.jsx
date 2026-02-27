@@ -12,7 +12,7 @@ export default function SMMScanner() {
         setLoading(true);
         setError(null);
         try {
-            const response = await axios.get(`http://localhost:8000/api/smm-scanner?timeframe=${timeframe}`);
+            const response = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/smm-scanner?timeframe=${timeframe}`);
             if (response.data.status === 'success') {
                 setSetups(response.data.data);
             }

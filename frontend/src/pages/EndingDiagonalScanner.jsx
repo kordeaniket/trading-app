@@ -12,7 +12,7 @@ export default function EndingDiagonalScanner() {
         setLoading(true);
         setError(null);
         try {
-            const response = await axios.get(`http://localhost:8000/api/ending-diagonal?timeframe=${timeframe}`);
+            const response = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/ending-diagonal?timeframe=${timeframe}`);
             if (response.data.status === 'success') {
                 setSetups(response.data.data);
             }

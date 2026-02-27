@@ -763,5 +763,5 @@ app.get('/api/triangle-breakout', async (req, res) => {
     res.json({ status: "success", data: results });
 });
 
-const PORT = 8000;
+const PORT = process.env.PORT || 8000;
 app.listen(PORT, () => console.log(`Backend PAPA Scanner Live on http://localhost:${PORT}`));

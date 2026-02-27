@@ -12,7 +12,7 @@ export default function BearishScanner() {
         setLoading(true);
         setError(null);
         try {
-            const response = await axios.get(`http://localhost:8000/api/bearish-setups?timeframe=${timeframe}`);
+            const response = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/scan-bearish?timeframe=${timeframe}`);
             if (response.data.status === 'success') {
                 const sorted = response.data.data.sort((a, b) => b.score - a.score);
                 setSetups(sorted);

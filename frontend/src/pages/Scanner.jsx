@@ -32,7 +32,7 @@ export default function Scanner() {
         setLoading(true);
         setError(null);
         try {
-            const response = await axios.get(`http://localhost:8000/api/scan?timeframe=${timeframe}&category=${category}`);
+            const response = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/scan?timeframe=${timeframe}&category=${category}`);
             if (response.data.status === 'success') {
                 setBreakouts(response.data.data);
             }
