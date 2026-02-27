@@ -138,7 +138,7 @@ const calculateATR = (data, period = 14) => {
     return atr;
 };
 
-// 🤖 AI-ENHANCED PATTERN DETECTION
+// 🤖 AI-ENHANCED PATTERN DETECTION (REFINED LOGIC)
 const detectPAPAPatterns = (quotes) => {
     if (quotes.length < 60) return [];
 
@@ -157,401 +157,268 @@ const detectPAPAPatterns = (quotes) => {
     const lastRSI = rsi[rsi.length - 1] || 50;
     const lastMACD = macd.macd[macd.macd.length - 1] || 0;
     const lastSignal = macd.signal[macd.signal.length - 1] || 0;
-    const lastBB = bb[bb.length - 1] || { upper: last.close * 1.02, lower: last.close * 0.98 };
-    const lastOBV = obv[obv.length - 1] || 0;
-    const prevOBV = obv[obv.length - 2] || 0;
     const lastATR = atr[atr.length - 1] || (last.high - last.low) * 0.5;
 
     const avgVol = quotes.slice(-20).reduce((s, q) => s + q.volume, 0) / 20;
     const volumeSpike = last.volume > avgVol * 1.5;
-    const volumeDecline = last.volume < avgVol * 0.7;
 
     const findings = [];
 
-    // 1. DOUBLE TOP with AI confirmation
-    const lookback = 30;
-    const recentHighs = quotes.slice(-lookback).filter(q =>
-        q.high > Math.max(...quotes.slice(-lookback).map(x => x.high)) * 0.98
+    // 1. DOUBLE TOP
+    const lookback = 40;
+    const recentHighs = quotes.slice(-lookback).filter((q, i, arr) =>
+        q.high === Math.max(...arr.slice(Math.max(0, i - 5), i + 6).map(x => x.high))
     );
-
     if (recentHighs.length >= 2) {
-        const firstHigh = recentHighs[0];
-        const secondHigh = recentHighs[recentHighs.length - 1];
-        const priceDiff = Math.abs(secondHigh.high - firstHigh.high) / firstHigh.high;
-
-        if (priceDiff < 0.03 && last.close < secondHigh.low) {
-            const rsiDivergence = lastRSI < rsi[rsi.length - 5];
-            const macdBearish = lastMACD < lastSignal;
-            const volumeConfirmation = volumeSpike;
-
-            if (rsiDivergence || macdBearish || volumeConfirmation) {
-                findings.push({
-                    type: 'DOUBLE_TOP',
-                    confidence: rsiDivergence && macdBearish ? 92 : 75,
-                    score: rsiDivergence && macdBearish ? 10 : 7,
-                    message: 'Double Top with bearish divergence',
-                    checklist: [
-                        { label: "Two distinct peaks at resistance", status: true },
-                        { label: "Breakout below neckline", status: true },
-                        { label: "RSI Bearish Divergence", status: rsiDivergence },
-                        { label: "MACD Signal Crossing Down", status: macdBearish },
-                        { label: "Volume Spiking on Breakdown", status: volumeConfirmation }
-                    ],
-                    price: last.close,
-                    stop_loss: secondHigh.high + lastATR,
-                    target: secondHigh.high - (firstHigh.high - firstHigh.low) * 2,
-                    volume: last.volume,
-                    avg_volume: avgVol
-                });
-            }
+        const p1 = recentHighs[recentHighs.length - 2];
+        const p2 = recentHighs[recentHighs.length - 1];
+        const priceDiff = Math.abs(p2.high - p1.high) / p1.high;
+        if (priceDiff < 0.03 && last.close < Math.min(p1.low, p2.low)) {
+            findings.push({
+                type: 'DOUBLE_TOP',
+                confidence: lastRSI < 50 ? 85 : 70,
+                score: 9,
+                message: 'Classic Double Top at major resistance. High probability reversal.',
+                stop_loss: Math.max(p1.high, p2.high) + lastATR,
+                target: last.close - (p1.high - Math.min(p1.low, p2.low))
+            });
         }
     }
 
-    // 2. DOUBLE BOTTOM with AI confirmation
-    const recentLows = quotes.slice(-lookback).filter(q =>
-        q.low < Math.min(...quotes.slice(-lookback).map(x => x.low)) * 1.02
+    // 2. DOUBLE BOTTOM
+    const recentLows = quotes.slice(-lookback).filter((q, i, arr) =>
+        q.low === Math.min(...arr.slice(Math.max(0, i - 5), i + 6).map(x => x.low))
     );
-
     if (recentLows.length >= 2) {
-        const firstLow = recentLows[0];
-        const secondLow = recentLows[recentLows.length - 1];
-        const priceDiff = Math.abs(secondLow.low - firstLow.low) / firstLow.low;
-
-        if (priceDiff < 0.03 && last.close > secondLow.high) {
-            const rsiBullish = lastRSI > rsi[rsi.length - 5];
-            const macdBullish = lastMACD > lastSignal;
-            const obvBullish = lastOBV > prevOBV;
-
-            if (rsiBullish || macdBullish || obvBullish) {
-                findings.push({
-                    type: 'DOUBLE_BOTTOM',
-                    confidence: rsiBullish && macdBullish ? 95 : 78,
-                    score: rsiBullish && macdBullish ? 11 : 8,
-                    message: 'Double Bottom with bullish confirmation',
-                    checklist: [
-                        { label: "Two distinct valleys at support", status: true },
-                        { label: "Breakout above neckline", status: true },
-                        { label: "RSI Bullish Strength", status: rsiBullish },
-                        { label: "MACD Signal Crossing Up", status: macdBullish },
-                        { label: "OBV Accumulation Trend", status: obvBullish }
-                    ],
-                    price: last.close,
-                    stop_loss: secondLow.low - lastATR,
-                    target: secondLow.low + (firstLow.high - firstLow.low) * 2,
-                    volume: last.volume,
-                    avg_volume: avgVol
-                });
-            }
+        const v1 = recentLows[recentLows.length - 2];
+        const v2 = recentLows[recentLows.length - 1];
+        const priceDiff = Math.abs(v2.low - v1.low) / v1.low;
+        if (priceDiff < 0.03 && last.close > Math.max(v1.high, v2.high)) {
+            findings.push({
+                type: 'DOUBLE_BOTTOM',
+                confidence: lastRSI > 50 ? 90 : 75,
+                score: 9,
+                message: 'Double Bottom confirmed at support. Bullish shift incoming.',
+                stop_loss: Math.min(v1.low, v2.low) - lastATR,
+                target: last.close + (Math.max(v1.high, v2.high) - v1.low)
+            });
         }
     }
 
-    // 3. HEAD AND SHOULDERS
+    // 3. THREE WHITE SOLDIERS
+    if (isBullish(prev2) && isBullish(prev) && isBullish(last) &&
+        last.close > prev.close && prev.close > prev2.close &&
+        last.open > prev.open && prev.open > prev2.open) {
+        findings.push({
+            type: 'THREE_WHITE_SOLDIERS',
+            confidence: volumeSpike ? 88 : 70,
+            score: 8,
+            message: 'Strong bullish conviction with three increasing candles.',
+            stop_loss: prev2.low,
+            target: last.close + (last.close - prev2.low)
+        });
+    }
+
+    // 4. THREE BLACK CROWS
+    if (isBearish(prev2) && isBearish(prev) && isBearish(last) &&
+        last.close < prev.close && prev.close < prev2.close &&
+        last.open < prev.open && prev.open < prev2.open) {
+        findings.push({
+            type: 'THREE_BLACK_CROWS',
+            confidence: volumeSpike ? 'HIGH' : 'MEDIUM',
+            score: 8,
+            message: 'Sharp selling pressure with consecutive lower closes.',
+            stop_loss: prev2.high,
+            target: last.close - (prev2.high - last.close)
+        });
+    }
+
+    // 5. BULLS COUNTER ATTACK
+    if (isBearish(prev) && isBullish(last) && last.open < prev.low &&
+        Math.abs(last.close - prev.close) / prev.close < 0.005) {
+        findings.push({
+            type: 'BULLS_COUNTER_ATTACK',
+            confidence: 'MEDIUM',
+            score: 7,
+            message: 'Bulls met bears head-on. Potential bottom formation.',
+            stop_loss: last.low,
+            target: last.close + (prev.open - prev.close)
+        });
+    }
+
+    // 6. BEARS COUNTER ATTACK
+    if (isBullish(prev) && isBearish(last) && last.open > prev.high &&
+        Math.abs(last.close - prev.close) / prev.close < 0.005) {
+        findings.push({
+            type: 'BEARS_COUNTER_ATTACK',
+            confidence: 'MEDIUM',
+            score: 7,
+            message: 'Bears halted the rally. Rejection at peak.',
+            stop_loss: last.high,
+            target: last.close - (prev.close - prev.open)
+        });
+    }
+
+    // 7. SANDWICH PATTERN (Bullish)
+    if (isBullish(prev2) && isBearish(prev) && isBullish(last) &&
+        last.close > prev.open && prev2.close > prev.open) {
+        findings.push({
+            type: 'SANDWICH_PATTERN',
+            confidence: 'HIGH',
+            score: 8,
+            message: 'Bearish candle trapped between two bulls. Momentum recovery.',
+            stop_loss: prev.low,
+            target: last.close + (last.close - prev.low)
+        });
+    }
+
+    // 8. ROUNDING BOTTOM (Simplified)
+    const recentCloseArr = quotes.slice(-30).map(q => q.close);
+    const minPrice = Math.min(...recentCloseArr);
+    const minIdx = recentCloseArr.indexOf(minPrice);
+    if (minIdx > 5 && minIdx < 25 && last.close > recentCloseArr[0] && last.close > recentCloseArr[minIdx] * 1.05) {
+        findings.push({
+            type: 'ROUNDING_BOTTOM',
+            confidence: 'MEDIUM',
+            score: 7,
+            message: 'Gradual U-shaped recovery detected. Long term reversal.',
+            stop_loss: minPrice,
+            target: last.close + (last.close - minPrice)
+        });
+    }
+
+    // 9. ROUNDING TOP
+    const maxPrice = Math.max(...recentCloseArr);
+    const maxIdx = recentCloseArr.indexOf(maxPrice);
+    if (maxIdx > 5 && maxIdx < 25 && last.close < recentCloseArr[0] && last.close < maxPrice * 0.95) {
+        findings.push({
+            type: 'ROUNDING_TOP',
+            confidence: 'MEDIUM',
+            score: 7,
+            message: 'Inverted U-shape distribution. Exit signals increasing.',
+            stop_loss: maxPrice,
+            target: last.close - (maxPrice - last.close)
+        });
+    }
+
+    // 10 & 11. GENUINE BO / BD
+    const resistance50 = Math.max(...quotes.slice(-50, -1).map(q => q.high));
+    const support50 = Math.min(...quotes.slice(-50, -1).map(q => q.low));
+    if (last.close > resistance50 && volumeSpike) {
+        findings.push({
+            type: 'GENUINE_BO',
+            confidence: 95,
+            score: 10,
+            message: 'High-volume breakout of 50-period range. Genuine momentum.',
+            stop_loss: resistance50 - lastATR,
+            target: last.close + (last.close - support50)
+        });
+    } else if (last.close < support50 && volumeSpike) {
+        findings.push({
+            type: 'GENUINE_BD',
+            confidence: 95,
+            score: 10,
+            message: 'High-volume breakdown. Major sell-off triggered.',
+            stop_loss: support50 + lastATR,
+            target: last.close - (resistance50 - last.close)
+        });
+    }
+
+    // 12 & 13. FAKE BO / BD
+    if (prev.high > resistance50 && last.close < resistance50) {
+        findings.push({
+            type: 'FAKE_BO',
+            confidence: 90,
+            score: 9,
+            message: 'Bull trap! Price failed to hold above resistance.',
+            stop_loss: prev.high,
+            target: last.close - lastATR * 3
+        });
+    } else if (prev.low < support50 && last.close > support50) {
+        findings.push({
+            type: 'FAKE_BD',
+            confidence: 90,
+            score: 9,
+            message: 'Bear trap! Liquidity hunt below support. Strong reversal potential.',
+            stop_loss: prev.low,
+            target: last.close + lastATR * 3
+        });
+    }
+
+    // 14 & 15. GAP UP / DOWN
+    if (last.open > prev.high * 1.01) {
+        findings.push({
+            type: 'GAP_UP',
+            confidence: 70,
+            score: 6,
+            message: 'Significant bullish gap. Demand exceeds supply at open.',
+            stop_loss: prev.close,
+            target: last.close + (last.open - prev.close)
+        });
+    } else if (last.open < prev.low * 0.99) {
+        findings.push({
+            type: 'GAP_DOWN',
+            confidence: 70,
+            score: 6,
+            message: 'Significant bearish gap. Panic selling at open.',
+            stop_loss: prev.close,
+            target: last.close - (prev.close - last.open)
+        });
+    }
+
+    // 16. HEAD AND SHOULDERS (General)
     const highs = quotes.map(q => q.high);
     const leftShoulder = Math.max(...highs.slice(-60, -40));
     const head = Math.max(...highs.slice(-40, -20));
     const rightShoulder = Math.max(...highs.slice(-20));
-
-    if (head > leftShoulder && head > rightShoulder &&
-        Math.abs(leftShoulder - rightShoulder) / leftShoulder < 0.05) {
-
+    if (head > leftShoulder && head > rightShoulder && Math.abs(leftShoulder - rightShoulder) / leftShoulder < 0.05) {
         const neckline = Math.min(...quotes.slice(-30).map(q => q.low));
         if (last.close < neckline) {
             findings.push({
                 type: 'HEAD_SHOULDERS',
-                confidence: volumeSpike ? 94 : 80,
-                score: volumeSpike ? 10 : 8,
+                confidence: 85,
+                score: 9,
                 message: 'Head & Shoulders Breakdown: Major trend reversal structure',
-                checklist: [
-                    { label: "Left Shoulder at resistance", status: true },
-                    { label: "Head peak higher than shoulders", status: true },
-                    { label: "Right Shoulder lower than head", status: true },
-                    { label: "Neckline support broken", status: true },
-                    { label: "Volume Spiking on breakdown", status: volumeSpike }
-                ],
-                price: last.close,
                 stop_loss: rightShoulder + lastATR,
-                target: neckline - (head - neckline),
-                volume: last.volume,
-                avg_volume: avgVol
+                target: neckline - (head - neckline)
             });
         }
     }
 
-    // 4. INVERSE HEAD AND SHOULDERS
+    // 17. INVERSE HEAD AND SHOULDERS (General)
     const lows = quotes.map(q => q.low);
     const leftShoulderLow = Math.min(...lows.slice(-60, -40));
     const headLow = Math.min(...lows.slice(-40, -20));
     const rightShoulderLow = Math.min(...lows.slice(-20));
-
-    if (headLow < leftShoulderLow && headLow < rightShoulderLow &&
-        Math.abs(leftShoulderLow - rightShoulderLow) / leftShoulderLow < 0.05) {
-
+    if (headLow < leftShoulderLow && headLow < rightShoulderLow && Math.abs(leftShoulderLow - rightShoulderLow) / leftShoulderLow < 0.05) {
         const necklineHigh = Math.max(...quotes.slice(-30).map(q => q.high));
         if (last.close > necklineHigh) {
             findings.push({
                 type: 'INVERSE_HS',
-                confidence: volumeSpike ? 96 : 82,
-                score: volumeSpike ? 11 : 9,
+                confidence: 88,
+                score: 10,
                 message: 'Inverse Head & Shoulders Breakout: Foundational reversal',
-                checklist: [
-                    { label: "Inverse Left Shoulder at support", status: true },
-                    { label: "Inverse Head valley lower than shoulders", status: true },
-                    { label: "Inverse Right Shoulder higher than head", status: true },
-                    { label: "Neckline resistance broken", status: true },
-                    { label: "Volume confirmation on surge", status: volumeSpike }
-                ],
-                price: last.close,
                 stop_loss: rightShoulderLow - lastATR,
-                target: necklineHigh + (necklineHigh - headLow),
-                volume: last.volume,
-                avg_volume: avgVol
+                target: necklineHigh + (necklineHigh - headLow)
             });
         }
     }
 
-    // 5. BULL FLAG
+    // 18. BULL FLAG (General)
     const flagpole = quotes.slice(-30, -20);
     const flag = quotes.slice(-20);
-
     if (flagpole.length > 0) {
         const poleHeight = Math.max(...flagpole.map(q => q.high)) - Math.min(...flagpole.map(q => q.low));
         const flagHigh = Math.max(...flag.map(q => q.high));
         const flagLow = Math.min(...flag.map(q => q.low));
-        const flagRange = flagHigh - flagLow;
-
-        if (flagRange < poleHeight * 0.3 && last.close > flagHigh) {
+        if (flagHigh - flagLow < poleHeight * 0.3 && last.close > flagHigh) {
             findings.push({
                 type: 'BULL_FLAG',
-                confidence: volumeSpike ? 'HIGH' : 'MEDIUM',
-                message: 'Bull Flag breakout',
-                entry: last.close,
+                confidence: 82,
+                score: 8,
+                message: 'Bull Flag breakout: Continuation of previous uptrend.',
                 stop_loss: flagLow - lastATR,
-                target: last.close + poleHeight,
-                flag_consolidation: flagRange / poleHeight
-            });
-        }
-    }
-
-    // 6. BEAR FLAG
-    if (flagpole.length > 0) {
-        const poleHeight = Math.max(...flagpole.map(q => q.high)) - Math.min(...flagpole.map(q => q.low));
-        const flagHigh = Math.max(...flag.map(q => q.high));
-        const flagLow = Math.min(...flag.map(q => q.low));
-        const flagRange = flagHigh - flagLow;
-
-        if (flagRange < poleHeight * 0.3 && last.close < flagLow) {
-            findings.push({
-                type: 'BEAR_FLAG',
-                confidence: volumeSpike ? 'HIGH' : 'MEDIUM',
-                message: 'Bear Flag breakdown',
-                entry: last.close,
-                stop_loss: flagHigh + lastATR,
-                target: last.close - poleHeight,
-                flag_consolidation: flagRange / poleHeight
-            });
-        }
-    }
-
-    // 7. MORNING STAR
-    if (quotes.length >= 3) {
-        const first = quotes[quotes.length - 3];
-        const second = quotes[quotes.length - 2];
-
-        if (isBearish(first) && Math.abs(second.close - second.open) < (second.high - second.low) * 0.2 &&
-            isBullish(last) && last.close > (first.open + first.close) / 2) {
-
-            findings.push({
-                type: 'MORNING_STAR',
-                confidence: volumeSpike ? 'HIGH' : 'MEDIUM',
-                message: 'Morning Star reversal',
-                entry: last.close,
-                stop_loss: Math.min(second.low, last.low) - lastATR,
-                target: last.close + (first.open - first.close) * 1.5,
-                doji_body: Math.abs(second.close - second.open)
-            });
-        }
-    }
-
-    // 8. EVENING STAR
-    if (quotes.length >= 3) {
-        const first = quotes[quotes.length - 3];
-        const second = quotes[quotes.length - 2];
-
-        if (isBullish(first) && Math.abs(second.close - second.open) < (second.high - second.low) * 0.2 &&
-            isBearish(last) && last.close < (first.open + first.close) / 2) {
-
-            findings.push({
-                type: 'EVENING_STAR',
-                confidence: volumeSpike ? 'HIGH' : 'MEDIUM',
-                message: 'Evening Star reversal',
-                entry: last.close,
-                stop_loss: Math.max(second.high, last.high) + lastATR,
-                target: last.close - (first.close - first.open) * 1.5,
-                doji_body: Math.abs(second.close - second.open)
-            });
-        }
-    }
-
-    // 9. HAMMER
-    if (isBullish(last)) {
-        const body = Math.abs(last.close - last.open);
-        const lowerShadow = Math.min(last.open, last.close) - last.low;
-        const upperShadow = last.high - Math.max(last.open, last.close);
-
-        if (lowerShadow > body * 2 && upperShadow < body * 0.3) {
-            findings.push({
-                type: 'HAMMER',
-                confidence: lowerShadow > body * 3 ? 'HIGH' : 'MEDIUM',
-                message: 'Hammer reversal at support',
-                entry: last.close,
-                stop_loss: last.low - lastATR,
-                target: last.close + lowerShadow * 2,
-                body_size: body,
-                shadow_ratio: lowerShadow / body
-            });
-        }
-    }
-
-    // 10. SHOOTING STAR
-    if (isBearish(last)) {
-        const body = Math.abs(last.close - last.open);
-        const upperShadow = last.high - Math.max(last.open, last.close);
-        const lowerShadow = Math.min(last.open, last.close) - last.low;
-
-        if (upperShadow > body * 2 && lowerShadow < body * 0.3) {
-            findings.push({
-                type: 'SHOOTING_STAR',
-                confidence: upperShadow > body * 3 ? 'HIGH' : 'MEDIUM',
-                message: 'Shooting star at resistance',
-                entry: last.close,
-                stop_loss: last.high + lastATR,
-                target: last.close - upperShadow * 2,
-                body_size: body,
-                shadow_ratio: upperShadow / body
-            });
-        }
-    }
-
-    // 11. PIERCING PATTERN
-    if (quotes.length >= 2) {
-        const prev = quotes[quotes.length - 2];
-
-        if (isBearish(prev) && isBullish(last) &&
-            last.open < prev.close && last.close > (prev.open + prev.close) / 2) {
-
-            findings.push({
-                type: 'PIERCING',
-                confidence: 'MEDIUM',
-                message: 'Piercing pattern reversal',
-                entry: last.close,
-                stop_loss: Math.min(prev.low, last.low) - lastATR,
-                target: last.close + (prev.open - prev.close),
-                penetration: (last.close - prev.close) / (prev.open - prev.close)
-            });
-        }
-    }
-
-    // 12. DARK CLOUD COVER
-    if (quotes.length >= 2) {
-        const prev = quotes[quotes.length - 2];
-
-        if (isBullish(prev) && isBearish(last) &&
-            last.open > prev.close && last.close < (prev.open + prev.close) / 2) {
-
-            findings.push({
-                type: 'DARK_CLOUD',
-                confidence: 'MEDIUM',
-                message: 'Dark cloud cover reversal',
-                entry: last.close,
-                stop_loss: Math.max(prev.high, last.high) + lastATR,
-                target: last.close - (prev.close - prev.open),
-                penetration: (prev.close - last.close) / (prev.close - prev.open)
-            });
-        }
-    }
-
-    // 13. THREE WHITE SOLDIERS
-    if (quotes.length >= 3) {
-        const c1 = quotes[quotes.length - 3];
-        const c2 = quotes[quotes.length - 2];
-
-        if (isBullish(c1) && isBullish(c2) && isBullish(last) &&
-            c2.close > c1.close && last.close > c2.close &&
-            c2.open > c1.open && last.open > c2.open) {
-
-            const bodiesIncreasing = (c2.close - c2.open) > (c1.close - c1.open) &&
-                (last.close - last.open) > (c2.close - c2.open);
-
-            findings.push({
-                type: 'THREE_SOLDIERS',
-                confidence: bodiesIncreasing ? 'HIGH' : 'MEDIUM',
-                message: 'Three White Soldiers - strong uptrend',
-                entry: last.close,
-                stop_loss: c1.low - lastATR,
-                target: last.close + (last.close - c1.low),
-                momentum: bodiesIncreasing ? 'ACCELERATING' : 'STEADY'
-            });
-        }
-    }
-
-    // 14. THREE BLACK CROWS
-    if (quotes.length >= 3) {
-        const c1 = quotes[quotes.length - 3];
-        const c2 = quotes[quotes.length - 2];
-
-        if (isBearish(c1) && isBearish(c2) && isBearish(last) &&
-            c2.close < c1.close && last.close < c2.close &&
-            c2.open < c1.open && last.open < c2.open) {
-
-            const bodiesIncreasing = (c1.open - c1.close) > (c2.open - c2.close) &&
-                (c2.open - c2.close) > (last.open - last.close);
-
-            findings.push({
-                type: 'THREE_CROWS',
-                confidence: bodiesIncreasing ? 'HIGH' : 'MEDIUM',
-                message: 'Three Black Crows - strong downtrend',
-                entry: last.close,
-                stop_loss: c1.high + lastATR,
-                target: last.close - (c1.high - last.close),
-                momentum: bodiesIncreasing ? 'ACCELERATING' : 'STEADY'
-            });
-        }
-    }
-
-    // 15. BULLISH ENGULFING
-    if (quotes.length >= 2) {
-        const prev = quotes[quotes.length - 2];
-
-        if (isBearish(prev) && isBullish(last) &&
-            last.open < prev.close && last.close > prev.open) {
-
-            findings.push({
-                type: 'BULLISH_ENGULFING',
-                confidence: last.volume > avgVol * 1.5 ? 'HIGH' : 'MEDIUM',
-                message: 'Bullish Engulfing with volume confirmation',
-                entry: last.close,
-                stop_loss: Math.min(prev.low, last.low) - lastATR,
-                target: last.close + (last.close - prev.low),
-                engulf_size: (last.close - last.open) / (prev.open - prev.close)
-            });
-        }
-    }
-
-    // 16. BEARISH ENGULFING
-    if (quotes.length >= 2) {
-        const prev = quotes[quotes.length - 2];
-
-        if (isBullish(prev) && isBearish(last) &&
-            last.open > prev.close && last.close < prev.open) {
-
-            findings.push({
-                type: 'BEARISH_ENGULFING',
-                confidence: last.volume > avgVol * 1.5 ? 'HIGH' : 'MEDIUM',
-                message: 'Bearish Engulfing with volume confirmation',
-                entry: last.close,
-                stop_loss: Math.max(prev.high, last.high) + lastATR,
-                target: last.close - (prev.high - last.close),
-                engulf_size: (prev.close - prev.open) / (last.open - last.close)
+                target: last.close + poleHeight
             });
         }
     }
@@ -560,6 +427,7 @@ const detectPAPAPatterns = (quotes) => {
         ...f,
         symbol: '',
         price: last.close,
+        close: last.close,
         volume: last.volume,
         avg_volume: avgVol,
         date: last.date.toISOString().split('T')[0],
@@ -1359,9 +1227,12 @@ app.get('/api/scan-bullish', async (req, res) => {
             if (data.length < 50) return;
 
             const patterns = detectPAPAPatterns(data);
-            const bullishTypes = ['DOUBLE_BOTTOM', 'INVERSE_HS', 'BULL_FLAG', 'MORNING_STAR',
-                'HAMMER', 'PIERCING', 'THREE_SOLDIERS', 'BULLISH_ENGULFING',
-                'SYMMETRICAL_TRIANGLE_BULL', 'ASCENDING_TRIANGLE', 'ENDING_DIAGONAL_BULLISH'];
+            const bullishTypes = [
+                'DOUBLE_BOTTOM', 'INVERSE_HS', 'BULL_FLAG', 'MORNING_STAR',
+                'HAMMER', 'PIERCING', 'THREE_WHITE_SOLDIERS', 'BULLISH_ENGULFING',
+                'SYMMETRICAL_TRIANGLE_BULL', 'ASCENDING_TRIANGLE', 'ENDING_DIAGONAL_BULLISH',
+                'BULLS_COUNTER_ATTACK', 'SANDWICH_PATTERN', 'ROUNDING_BOTTOM', 'GENUINE_BO', 'FAKE_BD', 'GAP_UP'
+            ];
 
             patterns.forEach(p => {
                 if (bullishTypes.includes(p.type)) {
@@ -1392,9 +1263,12 @@ app.get('/api/scan-bearish', async (req, res) => {
             if (data.length < 50) return;
 
             const patterns = detectPAPAPatterns(data);
-            const bearishTypes = ['DOUBLE_TOP', 'HEAD_SHOULDERS', 'BEAR_FLAG', 'EVENING_STAR',
-                'SHOOTING_STAR', 'DARK_CLOUD', 'THREE_CROWS', 'BEARISH_ENGULFING',
-                'SYMMETRICAL_TRIANGLE_BEAR', 'DESCENDING_TRIANGLE', 'ENDING_DIAGONAL_BEARISH'];
+            const bearishTypes = [
+                'DOUBLE_TOP', 'HEAD_SHOULDERS', 'BEAR_FLAG', 'EVENING_STAR',
+                'SHOOTING_STAR', 'DARK_CLOUD', 'THREE_BLACK_CROWS', 'BEARISH_ENGULFING',
+                'SYMMETRICAL_TRIANGLE_BEAR', 'DESCENDING_TRIANGLE', 'ENDING_DIAGONAL_BEARISH',
+                'BEARS_COUNTER_ATTACK', 'ROUNDING_TOP', 'GENUINE_BD', 'FAKE_BO', 'GAP_DOWN'
+            ];
 
             patterns.forEach(p => {
                 if (bearishTypes.includes(p.type)) {
@@ -1508,8 +1382,7 @@ app.get('/api/smm-scanner', async (req, res) => {
         timestamp: new Date().toISOString(),
         count: results.length,
         data: results.sort((a, b) => {
-            const confScore = { 'VERY_HIGH': 4, 'HIGH': 3, 'MEDIUM': 2, 'LOW': 1 };
-            return (confScore[b.confidence] || 0) - (confScore[a.confidence] || 0);
+            return (b.confidence || 0) - (a.confidence || 0);
         })
     });
 });
