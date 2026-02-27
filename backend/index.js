@@ -287,7 +287,14 @@ const fetchYahooData = async (symbol, interval) => {
         if (interval === '1mo') range = 'max';
 
         const url = `https://query2.finance.yahoo.com/v8/finance/chart/${symbol}?interval=${interval}&range=${range}`;
-        const response = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0' } });
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 5000); // 5s timeout per stock
+
+        const response = await fetch(url, {
+            headers: { 'User-Agent': 'Mozilla/5.0' },
+            signal: controller.signal
+        });
+        clearTimeout(timeout);
         if (!response.ok) {
             console.error(`Yahoo API error for ${symbol}: ${response.status}`);
             return [];
