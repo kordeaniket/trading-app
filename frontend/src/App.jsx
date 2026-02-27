@@ -1,7 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
 import { TrendingUp, LayoutDashboard, Settings, Layers, Briefcase, Zap, Activity, Triangle, Shield } from 'lucide-react';
-import Dashboard from './pages/Dashboard';
 import Scanner from './pages/Scanner';
 import HeikinAshi from './pages/HeikinAshi';
 import BullishScanner from './pages/BullishScanner';
@@ -31,9 +30,6 @@ const Sidebar = () => {
                 </div>
 
                 <nav className="space-y-2">
-                    <Link to="/" className={getLinkClass('/')}>
-                        <LayoutDashboard className="w-5 h-5" /> OVERVIEW
-                    </Link>
                     <Link to="/scanner" className={getLinkClass('/scanner')}>
                         <Layers className="w-5 h-5" /> AI SCANNER
                     </Link>
@@ -58,10 +54,6 @@ const Sidebar = () => {
                     <Link to="/smm" className={getLinkClass('/smm')}>
                         <Shield className="w-5 h-5 text-indigo-500" /> SMM DECISION SHEET
                     </Link>
-                    <button className={getLinkClass('/portfolio')}>
-                        <Briefcase className="w-5 h-5" /> PORTFOLIO
-                        <span className="ml-auto bg-gray-100 text-[10px] uppercase font-bold px-2 py-0.5 rounded text-gray-400">Soon</span>
-                    </button>
                 </nav>
             </div>
 
@@ -81,7 +73,7 @@ function App() {
                 <Sidebar />
                 <div className="flex-1 overflow-y-auto">
                     <Routes>
-                        <Route path="/" element={<Dashboard />} />
+                        <Route path="/" element={<Scanner />} />
                         <Route path="/scanner" element={<Scanner />} />
                         <Route path="/bullish" element={<BullishScanner />} />
                         <Route path="/bearish" element={<BearishScanner />} />
