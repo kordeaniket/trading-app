@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useLocation, Navigate } from 'react-router-dom';
-import { TrendingUp, LayoutDashboard, Settings, Layers, Briefcase, Zap, Activity, Triangle, Shield, Menu, X, ArrowRight, LogOut, BoxSelect } from 'lucide-react';
+import { TrendingUp, LayoutDashboard, Settings, Layers, Briefcase, Zap, Activity, Triangle, Shield, Menu, X, ArrowRight, LogOut, BoxSelect, BarChart2 } from 'lucide-react';
 import Scanner from './pages/Scanner';
 import HeikinAshi from './pages/HeikinAshi';
 import BullishScanner from './pages/BullishScanner';
@@ -11,6 +11,7 @@ import TriangleScanner from './pages/TriangleScanner';
 import SMMScanner from './pages/SMMScanner';
 import Login from './pages/Login';
 import BoxScanner from './pages/BoxScanner';
+import IndicesScanner from './pages/IndicesScanner';
 
 const Sidebar = ({ onLogout }) => {
     const location = useLocation();
@@ -37,6 +38,9 @@ const Sidebar = ({ onLogout }) => {
 
                 <nav className="space-y-2 font-sans">
                     <p className="text-[10px] font-black text-gray-300 uppercase tracking-[0.2em] mb-4 px-2">Market Intelligence</p>
+                    <Link to="/indices" className={getLinkClass('/indices')}>
+                        <BarChart2 className="w-5 h-5" /> <span className="text-[11px] tracking-widest uppercase">Indices Trend</span>
+                    </Link>
                     <Link to="/box-scanner" className={getLinkClass('/box-scanner')}>
                         <BoxSelect className="w-5 h-5" /> <span className="text-[11px] tracking-widest uppercase">Box Sniper</span>
                     </Link>
@@ -93,6 +97,7 @@ const MobileNav = ({ onLogout }) => {
 
     const navItems = [
         { path: '/box-scanner', icon: BoxSelect, label: 'BOX', color: 'text-indigo-500' },
+        { path: '/indices', icon: BarChart2, label: 'SECTORS', color: 'text-amber-500' },
         { path: '/scanner', icon: Layers, label: 'PAPA', color: 'text-blue-500' },
         { path: '/bullish', icon: Zap, label: 'BULL', color: 'text-emerald-500' },
         { path: '/smm', icon: Shield, label: 'DECISION', color: 'text-purple-500' },
@@ -229,6 +234,7 @@ function App() {
                         <Routes>
                             <Route path="/" element={<BoxScanner />} />
                             <Route path="/box-scanner" element={<BoxScanner />} />
+                            <Route path="/indices" element={<IndicesScanner />} />
                             <Route path="/scanner" element={<Scanner />} />
                             <Route path="/bullish" element={<BullishScanner />} />
                             <Route path="/bearish" element={<BearishScanner />} />
