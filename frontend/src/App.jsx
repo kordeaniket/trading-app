@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useLocation, Navigate } from 'react-router-dom';
-import { TrendingUp, LayoutDashboard, Settings, Layers, Briefcase, Zap, Activity, Triangle, Shield, Menu, X, ArrowRight, LogOut, BoxSelect, BarChart2 } from 'lucide-react';
+import { TrendingUp, LayoutDashboard, Settings, Layers, Briefcase, Zap, Activity, Triangle, Shield, Menu, X, ArrowRight, LogOut, BoxSelect, BarChart2, Brain, BookOpen } from 'lucide-react';
 import Scanner from './pages/Scanner';
 import HeikinAshi from './pages/HeikinAshi';
 import BullishScanner from './pages/BullishScanner';
@@ -9,9 +9,12 @@ import ThirdWaveScanner from './pages/ThirdWaveScanner';
 import EndingDiagonalScanner from './pages/EndingDiagonalScanner';
 import TriangleScanner from './pages/TriangleScanner';
 import SMMScanner from './pages/SMMScanner';
-import Login from './pages/Login';
 import BoxScanner from './pages/BoxScanner';
 import IndicesScanner from './pages/IndicesScanner';
+import CupHandleScanner from './pages/CupHandleScanner';
+import TradingPsychology from './pages/TradingPsychology';
+import Login from './pages/Login';
+import Academy from './pages/Academy';
 
 const Sidebar = ({ onLogout }) => {
     const location = useLocation();
@@ -40,6 +43,10 @@ const Sidebar = ({ onLogout }) => {
                     <p className="text-[10px] font-black text-gray-300 uppercase tracking-[0.2em] mb-4 px-2">Market Intelligence</p>
                     <Link to="/indices" className={getLinkClass('/indices')}>
                         <BarChart2 className="w-5 h-5" /> <span className="text-[11px] tracking-widest uppercase">Indices Trend</span>
+                    </Link>
+                    <Link to="/cup-handle" className={getLinkClass('/cup-handle')}>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-cup-soda"><path d="m8 22 1-15" /><path d="m16 22-1-15" /><path d="M4 7c0-2.2 3.6-4 8-4s8 1.8 8 4-3.6 4-8 4-8-1.8-8-4Z" /><path d="M12 2v5" /><path d="M7.1 22h9.8c.6 0 1.1-.4 1.2-1l1.6-14H4.3l1.6 14c.1.6.6 1 1.2 1Z" /></svg>
+                        <span className="text-[11px] tracking-widest uppercase">Cup & Handle</span>
                     </Link>
                     <Link to="/box-scanner" className={getLinkClass('/box-scanner')}>
                         <BoxSelect className="w-5 h-5" /> <span className="text-[11px] tracking-widest uppercase">Box Sniper</span>
@@ -72,6 +79,12 @@ const Sidebar = ({ onLogout }) => {
                     <Link to="/smm" className={getLinkClass('/smm')}>
                         <Shield className="w-5 h-5" /> <span className="text-[11px] tracking-widest uppercase">Decision Sheet</span>
                     </Link>
+                    <Link to="/mindset" className={getLinkClass('/mindset')}>
+                        <Brain className="w-5 h-5" /> <span className="text-[11px] tracking-widest uppercase">Pro Mindset</span>
+                    </Link>
+                    <Link to="/academy" className={getLinkClass('/academy')}>
+                        <BookOpen className="w-5 h-5" /> <span className="text-[11px] tracking-widest uppercase">Academy</span>
+                    </Link>
                 </nav>
             </div>
 
@@ -97,6 +110,7 @@ const MobileNav = ({ onLogout }) => {
 
     const navItems = [
         { path: '/box-scanner', icon: BoxSelect, label: 'BOX', color: 'text-indigo-500' },
+        { path: '/cup-handle', icon: Activity, label: 'CUP', color: 'text-fuchsia-500' },
         { path: '/indices', icon: BarChart2, label: 'SECTORS', color: 'text-amber-500' },
         { path: '/scanner', icon: Layers, label: 'PAPA', color: 'text-blue-500' },
         { path: '/bullish', icon: Zap, label: 'BULL', color: 'text-emerald-500' },
@@ -105,6 +119,7 @@ const MobileNav = ({ onLogout }) => {
 
     const allItems = [
         { path: '/box-scanner', icon: BoxSelect, label: 'Box Sniper', color: 'bg-indigo-50 text-indigo-600', desc: 'Consolidation BO' },
+        { path: '/cup-handle', icon: Activity, label: 'Cup Breakout', color: 'bg-fuchsia-50 text-fuchsia-600', desc: 'U-Base Reversal' },
         { path: '/scanner', icon: Layers, label: 'PAPA Scanner', color: 'bg-blue-50 text-blue-600', desc: 'AI Geometric Patterns' },
         { path: '/bullish', icon: Zap, label: 'Bull Sniper', color: 'bg-emerald-50 text-emerald-600', desc: 'Long Reversal Radar' },
         { path: '/bearish', icon: Zap, label: 'Bear Sniper', color: 'bg-rose-50 text-rose-600', desc: 'Short Risk Detection' },
@@ -112,7 +127,9 @@ const MobileNav = ({ onLogout }) => {
         { path: '/third-wave', icon: Activity, label: '3rd Wave', color: 'bg-blue-50 text-blue-600', desc: 'Elliot Wave Impulse' },
         { path: '/ending-diagonal', icon: Triangle, label: 'Ending Diag', color: 'bg-orange-50 text-orange-600', desc: 'Terminal Pattern' },
         { path: '/triangle', icon: Triangle, label: 'Triangle BO', color: 'bg-cyan-50 text-cyan-600', desc: 'Symmetrical Wedge' },
-        { path: '/smm', icon: Shield, label: 'SMM Sheet', color: 'bg-purple-50 text-purple-600', desc: 'Decision Matrix' }
+        { path: '/smm', icon: Shield, label: 'SMM Sheet', color: 'bg-purple-50 text-purple-600', desc: 'Decision Matrix' },
+        { path: '/mindset', icon: Brain, label: 'Pro Mindset', color: 'bg-amber-50 text-amber-600', desc: 'Risk & Psychology' },
+        { path: '/academy', icon: BookOpen, label: 'Academy', color: 'bg-cyan-50 text-cyan-600', desc: 'Patterns & Basics' }
     ];
 
     return (
@@ -234,6 +251,7 @@ function App() {
                         <Routes>
                             <Route path="/" element={<BoxScanner />} />
                             <Route path="/box-scanner" element={<BoxScanner />} />
+                            <Route path="/cup-handle" element={<CupHandleScanner />} />
                             <Route path="/indices" element={<IndicesScanner />} />
                             <Route path="/scanner" element={<Scanner />} />
                             <Route path="/bullish" element={<BullishScanner />} />
@@ -243,6 +261,8 @@ function App() {
                             <Route path="/ending-diagonal" element={<EndingDiagonalScanner />} />
                             <Route path="/triangle" element={<TriangleScanner />} />
                             <Route path="/smm" element={<SMMScanner />} />
+                            <Route path="/mindset" element={<TradingPsychology />} />
+                            <Route path="/academy" element={<Academy />} />
                             <Route path="*" element={<Navigate to="/" />} />
                         </Routes>
                     </main>

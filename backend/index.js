@@ -2691,5 +2691,158 @@ app.get('/api/market-summary', async (req, res) => {
     });
 });
 
+app.get('/api/scan-cup-handle', async (req, res) => {
+    try {
+        const timeframe = req.query.timeframe || '1d';
+        const limit = parseInt(req.query.limit) || 300;
+        const stocksToScan = NIFTY_STOCKS.slice(0, limit);
+        const results = [];
+
+        for (const symbol of stocksToScan) {
+            const data = await fetchYahooData(symbol, timeframe);
+            if (!data || data.length < 150) continue;
+
+            const closes = data.map(d => d.close);
+            const highs = data.map(d => d.high);
+            const lows = data.map(d => d.low);
+            const volumes = data.map(d => d.volume);
+
+            const lastIdx = data.length - 1;
+            const currentClose = closes[lastIdx];
+            const currentHigh = highs[lastIdx];
+            const currentVolume = volumes[lastIdx];
+            const sma20VolArr = calculateSMA(volumes.slice(0, lastIdx), 20);
+            const sma20Vol = sma20VolArr[sma20VolArr.length - 1] || currentVolume;
+            const rsiValues = calculateRSI(data, 14);
+            const rsi = rsiValues[rsiValues.length - 1];
+
+            // EMA calculation handling based on existing object structure expected
+            const ema50Values = calculateEMA(data, 50);
+            const ema200Values = calculateEMA(data, 200);
+            const ema50 = ema50Values[ema50Values.length - 1];
+            const ema200 = ema200Values[ema200Values.length - 1];
+
+            // Check momentum (RSI) - strict criteria for genuine breakouts
+            if (rsi < 45 || rsi > 85) continue;
+
+            // Limit Volume Drop (ensure liquidity) 
+            if (currentVolume < sma20Vol * 0.8) continue;
+
+            if (timeframe === '1d') {
+                if (currentClose < ema200) continue;
+                if (sma20Vol < 150000) continue;
+            } else if (timeframe === '1wk') {
+                const ma40 = calculateSMA(closes, 40);
+                if (currentClose < ma40[ma40.length - 1] * 0.95) continue;
+            } else if (timeframe === '1mo') {
+                const ma10 = calculateSMA(closes, 10);
+                if (currentClose < ma10[ma10.length - 1] * 0.95) continue;
+            }
+
+            let minCupLen, maxCupLen;
+            let maxHandleLen;
+            if (timeframe === '1d') {
+                minCupLen = 30; maxCupLen = 130;  // 6 to 26 weeks
+                maxHandleLen = 15;
+            } else if (timeframe === '1wk') {
+                minCupLen = 12; maxCupLen = 52;  // 3 to 12 months
+                maxHandleLen = 6;
+            } else if (timeframe === '1mo') {
+                minCupLen = 12; maxCupLen = 36;  // 1 to 3 years
+                maxHandleLen = 4;
+            } else {
+                minCupLen = 30; maxCupLen = 130;
+                maxHandleLen = 15;
+            }
+
+            let foundSetup = false;
+            let setupDetails = null;
+
+            for (let handleLen = 2; handleLen <= maxHandleLen; handleLen++) {
+                if (foundSetup) break;
+
+                const rightPeakIdx = lastIdx - handleLen;
+                if (rightPeakIdx <= 0) continue;
+
+                const rightPeak = highs[rightPeakIdx];
+                const handleLows = lows.slice(rightPeakIdx + 1, lastIdx);
+                if (handleLows.length === 0) continue;
+
+                let handleLow = Math.min(...handleLows);
+
+                // STRICT SETTING: Handle retracement ≤ 15% from cup high
+                if ((rightPeak - handleLow) / rightPeak > 0.15) continue;
+                if ((rightPeak - handleLow) / rightPeak < 0.01) continue; // Ensure it's not a flat line
+
+                for (let cupLen = minCupLen; cupLen <= maxCupLen; cupLen++) {
+                    const leftPeakIdx = rightPeakIdx - cupLen;
+                    if (leftPeakIdx <= 30) continue;
+
+                    // PROPORTIONALITY: Ensure Cup is much longer than Handle (at least 3x)
+                    if (cupLen < handleLen * 3) continue;
+
+                    const leftPeak = highs[leftPeakIdx];
+                    const resistance = Math.max(leftPeak, rightPeak);
+
+                    // The highs should be nearly equal (difference < 8%)
+                    if (Math.abs(leftPeak - rightPeak) / resistance > 0.08) continue;
+
+                    // The Breakout must be near
+                    if (currentClose < resistance * 0.95 || currentClose > resistance * 1.05) continue;
+
+                    const cupLows = lows.slice(leftPeakIdx, rightPeakIdx);
+                    if (cupLows.length === 0) continue;
+
+                    const cupLowest = Math.min(...cupLows);
+                    const depthPct = (leftPeak - cupLowest) / leftPeak;
+
+                    // STRICT SETTING: Cup depth between 12% and 35%
+                    if (depthPct < 0.12 || depthPct > 0.35) continue;
+
+                    // STRICT SETTING: Handle forms in the upper half of cup
+                    const halfDepth = leftPeak - ((leftPeak - cupLowest) / 2);
+                    if (handleLow < halfDepth) continue;
+
+                    // PRIOR UPTREND: Ensure min 20% rise before cup formation
+                    let preCupLookback = Math.max(0, leftPeakIdx - 40);
+                    const preCupLows = lows.slice(preCupLookback, leftPeakIdx);
+                    if (preCupLows.length === 0) continue;
+
+                    const preCupLow = Math.min(...preCupLows);
+                    const preCupClose = closes[leftPeakIdx];
+                    if ((preCupClose - preCupLow) / preCupLow < 0.20) continue;
+
+                    foundSetup = true;
+                    setupDetails = {
+                        pattern: 'Cup & Handle Breakout',
+                        resistance: parseFloat(resistance.toFixed(2)),
+                        cupDepthPct: parseFloat((depthPct * 100).toFixed(2)),
+                        handleRetracement: parseFloat(((rightPeak - handleLow) / rightPeak * 100).toFixed(2)),
+                        volumeMultiplier: parseFloat((currentVolume / sma20Vol).toFixed(2)),
+                    };
+                    break;
+                }
+            }
+
+            if (foundSetup) {
+                results.push({
+                    symbol: symbol.replace('.NS', ''),
+                    price: parseFloat(currentClose.toFixed(2)),
+                    rsi: parseFloat(rsi.toFixed(2)),
+                    ...setupDetails,
+                    trend: 'BULLISH',
+                    date: data[lastIdx].date.toISOString().split('T')[0]
+                });
+            }
+
+            await new Promise(r => setTimeout(r, 100));
+        }
+        res.json({ status: 'success', data: results });
+    } catch (err) {
+        console.error('Cup & Handle Error:', err);
+        res.status(500).json({ status: 'error', message: err.message });
+    }
+});
+
 const PORT = process.env.PORT || 8000;
 app.listen(PORT, () => console.log(`🚀 Enhanced PAPA Scanner Live on http://localhost:${PORT}`));
